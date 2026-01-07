@@ -1,52 +1,55 @@
-let originalFileName = '';
+document.addEventListener('DOMContentLoaded', () => {
+    // Mobile Navigation Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    const links = document.querySelectorAll('.nav-links li');
 
-document.getElementById('fileInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        originalFileName = file.name.split('.').slice(0, -1).join('.');
-        document.getElementById('filename').textContent = `Selected file: ${file.name}`;
-        document.getElementById('errorMessage').style.display = 'none';
-    }
+    hamburger.addEventListener('click', () => {
+        // Toggle Nav
+        navLinks.classList.toggle('active');
+        hamburger.classList.toggle('active');
+    });
+
+    // Close mobile menu when a link is clicked
+    links.forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+            hamburger.classList.remove('active');
+        });
+    });
+
+    // Smooth Scrolling for Anchor Links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                // Adjust for fixed header height
+                const headerOffset = 80;
+                const elementPosition = targetElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Header Scroll Effect (Optional: add shadow on scroll if not using fixed shadow)
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            header.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)";
+        } else {
+            // Keep original shadow or remove it if desired.
+            // In CSS we already have a shadow, so we can skip this or make it more pronounced.
+        }
+    });
 });
-
-function convertFile() {
-    const fileInput = document.getElementById('fileInput');
-    const formatSelect = document.getElementById('formatSelect');
-    const downloadLink = document.getElementById('downloadLink');
-    const errorMessage = document.getElementById('errorMessage');
-
-    if (!fileInput.files[0]) {
-        errorMessage.textContent = 'Please select a file first!';
-        errorMessage.style.display = 'block';
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const selectedFormat = formatSelect.value;
-
-    // Convert to image (works for image files)
-    if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                const dataUrl = canvas.toDataURL(`image/${selectedFormat}`);
-                downloadLink.href = dataUrl;
-                downloadLink.download = `${originalFileName}.${selectedFormat}`;
-                downloadLink.textContent = `Download ${originalFileName}.${selectedFormat}`;
-                downloadLink.style.display = 'block';
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    } else {
-        errorMessage.textContent = 'Non-image files require server-side conversion!';
-        errorMessage.style.display = 'block';
-    }
-}
