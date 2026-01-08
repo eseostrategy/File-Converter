@@ -48,8 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Close menu when clicking a link
-        const mobileLinks = mobileMenu.querySelectorAll('a');
+        // Close menu when clicking a link (except dropdown toggles)
+        const mobileLinks = mobileMenu.querySelectorAll('a:not(.mobile-dropdown-toggle)');
         mobileLinks.forEach(link => {
             link.addEventListener('click', () => {
                 mobileMenu.classList.remove('active');
@@ -57,4 +57,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // 4. Mobile Dropdown Toggle
+    const mobileDropdownToggles = document.querySelectorAll('.mobile-dropdown-toggle');
+    mobileDropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const dropdown = toggle.closest('.mobile-dropdown');
+            dropdown.classList.toggle('active');
+
+            // Rotate icon
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                icon.style.transform = dropdown.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
+                icon.style.transition = 'transform 0.3s';
+            }
+        });
+    });
 });

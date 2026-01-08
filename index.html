@@ -10,14 +10,28 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar" id="navbar">
+        <nav class="navbar" id="navbar">
         <div class="container navbar-container">
             <a href="index.html" class="logo">eseostrategy</a>
 
             <div class="nav-links">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="services.html" class="nav-link">Services</a>
-                <a href="monthly-seo.html" class="nav-link">Monthly SEO</a>
+                <a href="index.html" class="nav-link">Home</a>
+
+                <!-- Services Dropdown -->
+                <div class="dropdown">
+                    <a href="services.html" class="nav-link dropdown-toggle">Services</a>
+                    <div class="dropdown-menu">
+                        <a href="monthly-seo.html" class="dropdown-item">Monthly SEO Package</a>
+                        <a href="pbn-backlinks.html" class="dropdown-item">PBN Backlinks</a>
+                        <a href="tf-pbn-backlinks.html" class="dropdown-item">TF PBN Backlinks</a>
+                        <a href="guest-post.html" class="dropdown-item">Guest Post</a>
+                        <a href="seo-backlinks.html" class="dropdown-item">SEO Backlinks</a>
+                        <a href="da-follow-backlink.html" class="dropdown-item">DA Follow Backlink</a>
+                        <a href="increase-da-50.html" class="dropdown-item">INCREASE DA 50</a>
+                        <a href="edu-guest-post.html" class="dropdown-item">EDU Guest Post</a>
+                    </div>
+                </div>
+
                 <a href="about.html" class="nav-link">About Us</a>
                 <a href="contact.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Get Free Audit</a>
             </div>
@@ -30,12 +44,27 @@
         <!-- Mobile Menu -->
         <div class="mobile-menu" id="mobile-menu">
             <a href="index.html">Home</a>
-            <a href="services.html">Services</a>
-            <a href="monthly-seo.html">Monthly SEO</a>
+
+            <div class="mobile-dropdown" id="mobile-services-dropdown">
+                <a href="#" class="mobile-dropdown-toggle">Services <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown-menu">
+                    <a href="services.html" class="mobile-dropdown-item">All Services</a>
+                    <a href="monthly-seo.html" class="mobile-dropdown-item">Monthly SEO Package</a>
+                    <a href="pbn-backlinks.html" class="mobile-dropdown-item">PBN Backlinks</a>
+                    <a href="tf-pbn-backlinks.html" class="mobile-dropdown-item">TF PBN Backlinks</a>
+                    <a href="guest-post.html" class="mobile-dropdown-item">Guest Post</a>
+                    <a href="seo-backlinks.html" class="mobile-dropdown-item">SEO Backlinks</a>
+                    <a href="da-follow-backlink.html" class="mobile-dropdown-item">DA Follow Backlink</a>
+                    <a href="increase-da-50.html" class="mobile-dropdown-item">INCREASE DA 50</a>
+                    <a href="edu-guest-post.html" class="mobile-dropdown-item">EDU Guest Post</a>
+                </div>
+            </div>
+
             <a href="about.html">About Us</a>
             <a href="contact.html">Contact</a>
         </div>
     </nav>
+
 
     <!-- Hero Section -->
     <section class="hero">
