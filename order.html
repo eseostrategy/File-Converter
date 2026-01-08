@@ -85,6 +85,15 @@
                         </div>
                     </div>
 
+                    <div class="form-group" style="margin-top: -15px;">
+                        <label for="discount-code">Discount Code</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="discount-code" placeholder="Enter promo code" style="text-transform: uppercase;">
+                            <button type="button" id="apply-discount" class="btn btn-secondary" style="margin: 0; padding: 10px 20px;">Apply</button>
+                        </div>
+                        <small id="discount-message" style="display: block; margin-top: 5px;"></small>
+                    </div>
+
                     <h3 style="color: var(--secondary-color); margin: 30px 0 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">Your Information</h3>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -109,13 +118,19 @@
                         <label for="payment-method">Payment Method Used <span style="color: red;">*</span></label>
                         <select id="payment-method" name="payment_method" required>
                             <option value="" disabled selected>Select Payment Method</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="JazzCash">JazzCash</option>
-                            <option value="Easypaisa">Easypaisa</option>
-                            <option value="Crypto (USDT/BTC)">Crypto (USDT/BTC)</option>
+                            <option value="USDT (TRC20)">Crypto: USDT (TRC20)</option>
+                            <option value="BTC (BEP20)">Crypto: BTC (BEP20)</option>
                             <option value="PayPal">PayPal</option>
                             <option value="Wise">Wise</option>
                         </select>
+
+                        <!-- Dynamic Payment Details Display -->
+                        <div id="payment-details-display" style="margin-top: 10px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 5px; display: none;">
+                            <p style="margin-bottom: 5px; font-size: 0.9rem; color: var(--secondary-color);">Please send payment to:</p>
+                            <code id="wallet-address" style="display: block; word-break: break-all; color: var(--primary-color); font-weight: bold; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 3px;"></code>
+                            <small style="color: var(--text-color); margin-top: 5px; display: block;">Copy this address carefully.</small>
+                        </div>
+
                         <small style="color: var(--text-color); display: block; margin-top: 5px;">Haven't paid yet? <a href="payment.html" target="_blank" style="color: var(--primary-color);">View Payment Details</a></small>
                     </div>
 
@@ -185,7 +200,6 @@
                     <i class="fab fa-cc-mastercard" title="MasterCard"></i>
                     <i class="fab fa-paypal" title="PayPal"></i>
                     <i class="fab fa-bitcoin" title="Crypto"></i>
-                    <i class="fas fa-university" title="Bank Transfer"></i>
                 </div>
                 <p>&copy; <span id="year"></span> eseostrategy. All rights reserved.</p>
             </div>

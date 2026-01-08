@@ -50,6 +50,67 @@ document.addEventListener('DOMContentLoaded', () => {
         if (plan) document.getElementById('order-plan').value = plan;
         if (price) document.getElementById('order-price').value = price;
 
+        // --- Discount Logic ---
+        const discountInput = document.getElementById('discount-code');
+        const applyBtn = document.getElementById('apply-discount');
+        const discountMsg = document.getElementById('discount-message');
+        const priceInput = document.getElementById('order-price');
+        let originalPrice = parseFloat(price) || 0;
+        let isDiscountApplied = false;
+
+        if (applyBtn && discountInput) {
+            applyBtn.addEventListener('click', () => {
+                const code = discountInput.value.trim().toUpperCase();
+
+                if (isDiscountApplied) {
+                     discountMsg.textContent = "Discount already applied!";
+                     discountMsg.style.color = 'orange';
+                     return;
+                }
+
+                if (originalPrice === 0 && priceInput.value) {
+                    originalPrice = parseFloat(priceInput.value);
+                }
+
+                if (code === 'SEO2026' || code === 'PRO10') {
+                    // Apply 10% discount
+                    const discount = originalPrice * 0.10;
+                    const newPrice = originalPrice - discount;
+                    priceInput.value = newPrice.toFixed(2);
+
+                    discountMsg.textContent = "Success! 10% discount applied.";
+                    discountMsg.style.color = 'var(--accent-color)';
+                    isDiscountApplied = true;
+                    applyBtn.disabled = true;
+                    applyBtn.textContent = 'Applied';
+                } else {
+                    discountMsg.textContent = "Invalid discount code.";
+                    discountMsg.style.color = 'red';
+                }
+            });
+        }
+
+        // --- Payment Method Change Logic ---
+        const paymentSelect = document.getElementById('payment-method');
+        const detailsDisplay = document.getElementById('payment-details-display');
+        const walletAddressCode = document.getElementById('wallet-address');
+
+        if (paymentSelect) {
+            paymentSelect.addEventListener('change', (e) => {
+                const method = e.target.value;
+
+                if (method.includes('USDT')) {
+                    detailsDisplay.style.display = 'block';
+                    walletAddressCode.textContent = 'TAtJ84g1XdFFf7zRnxmjXAmCf47D7jJxpB';
+                } else if (method.includes('BTC')) {
+                    detailsDisplay.style.display = 'block';
+                    walletAddressCode.textContent = '0x1920ada87423da425afb1a52fcac1fd2696974a2';
+                } else {
+                    detailsDisplay.style.display = 'none';
+                }
+            });
+        }
+
         // 2. Handle Form Submission
         orderForm.addEventListener('submit', (e) => {
             e.preventDefault();
