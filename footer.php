@@ -9,10 +9,21 @@
                     </div>
                     <p style="margin-top: 1rem;">Maximizing online visibility through data-driven SEO strategies.</p>
                     <div class="social-links">
-                        <a href="https://twitter.com/Mobeen_DMN" target="_blank" class="social-link"><i class="fab fa-twitter"></i></a>
-                        <a href="https://www.facebook.com/eseostrategy/" target="_blank" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                        <a href="https://t.me/eseostrategy" target="_blank" class="social-link"><i class="fab fa-telegram"></i></a>
-                        <a href="https://join.skype.com/invite/vnB22p2eSrCb" target="_blank" class="social-link"><i class="fab fa-skype"></i></a>
+                        <?php if ( get_theme_mod( 'eseo_social_twitter', 'https://twitter.com/Mobeen_DMN' ) ) : ?>
+                            <a href="<?php echo esc_url( get_theme_mod( 'eseo_social_twitter', 'https://twitter.com/Mobeen_DMN' ) ); ?>" target="_blank" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <?php endif; ?>
+
+                        <?php if ( get_theme_mod( 'eseo_social_facebook', 'https://www.facebook.com/eseostrategy/' ) ) : ?>
+                            <a href="<?php echo esc_url( get_theme_mod( 'eseo_social_facebook', 'https://www.facebook.com/eseostrategy/' ) ); ?>" target="_blank" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                        <?php endif; ?>
+
+                        <?php if ( get_theme_mod( 'eseo_social_telegram', 'https://t.me/eseostrategy' ) ) : ?>
+                            <a href="<?php echo esc_url( get_theme_mod( 'eseo_social_telegram', 'https://t.me/eseostrategy' ) ); ?>" target="_blank" class="social-link"><i class="fab fa-telegram"></i></a>
+                        <?php endif; ?>
+
+                        <?php if ( get_theme_mod( 'eseo_social_skype', 'https://join.skype.com/invite/vnB22p2eSrCb' ) ) : ?>
+                            <a href="<?php echo esc_url( get_theme_mod( 'eseo_social_skype', 'https://join.skype.com/invite/vnB22p2eSrCb' ) ); ?>" target="_blank" class="social-link"><i class="fab fa-skype"></i></a>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="footer-col">
@@ -36,9 +47,9 @@
                 <div class="footer-col">
                     <h3>Contact Info</h3>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> support@eseostrategy.com</li>
-                        <li><i class="fas fa-phone"></i> +92 3113793342</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Office# 39, Reshmeen Center, Latifabad# 7, Hyderabad, Pakistan</li>
+                        <li><i class="fas fa-envelope"></i> <?php echo esc_html( get_theme_mod( 'eseo_email', 'support@eseostrategy.com' ) ); ?></li>
+                        <li><i class="fas fa-phone"></i> <?php echo esc_html( get_theme_mod( 'eseo_phone', '+92 3113793342' ) ); ?></li>
+                        <li><i class="fas fa-map-marker-alt"></i> <?php echo esc_html( get_theme_mod( 'eseo_address', 'Office# 39, Reshmeen Center, Latifabad# 7, Hyderabad, Pakistan' ) ); ?></li>
                     </ul>
                 </div>
             </div>

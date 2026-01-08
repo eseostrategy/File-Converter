@@ -52,24 +52,28 @@ get_header(); ?>
             <div class="stats-grid fade-in" style="margin-top: 80px; max-width: 800px; margin-left: auto; margin-right: auto;">
                 <div class="stat-card">
                     <i class="fas fa-envelope" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
-                    <p><a href="mailto:support@eseostrategy.com">support@eseostrategy.com</a></p>
+                    <p><a href="mailto:<?php echo esc_attr( get_theme_mod( 'eseo_email', 'support@eseostrategy.com' ) ); ?>"><?php echo esc_html( get_theme_mod( 'eseo_email', 'support@eseostrategy.com' ) ); ?></a></p>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-phone" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
-                    <p><a href="tel:+923113793342">+92 3113793342</a></p>
+                    <p><a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', get_theme_mod( 'eseo_phone', '+92 3113793342' ) ) ); ?>"><?php echo esc_html( get_theme_mod( 'eseo_phone', '+92 3113793342' ) ); ?></a></p>
                 </div>
                 <div class="stat-card">
                     <i class="fas fa-map-marker-alt" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
-                    <p>Office# 39, Reshmeen Center, Latifabad# 7, Hyderabad, Pakistan</p>
+                    <p><?php echo esc_html( get_theme_mod( 'eseo_address', 'Office# 39, Reshmeen Center, Latifabad# 7, Hyderabad, Pakistan' ) ); ?></p>
                 </div>
+                <?php if ( get_theme_mod( 'eseo_social_skype', 'https://join.skype.com/invite/vnB22p2eSrCb' ) ) : ?>
                 <div class="stat-card">
                     <i class="fab fa-skype" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
-                    <p><a href="https://join.skype.com/invite/vnB22p2eSrCb">@eseostrategy</a></p>
+                    <p><a href="<?php echo esc_url( get_theme_mod( 'eseo_social_skype', 'https://join.skype.com/invite/vnB22p2eSrCb' ) ); ?>">@eseostrategy</a></p>
                 </div>
+                <?php endif; ?>
+                <?php if ( get_theme_mod( 'eseo_social_telegram', 'https://t.me/eseostrategy' ) ) : ?>
                 <div class="stat-card">
                     <i class="fab fa-telegram" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
-                    <p><a href="https://t.me/eseostrategy">@eseostrategy</a></p>
+                    <p><a href="<?php echo esc_url( get_theme_mod( 'eseo_social_telegram', 'https://t.me/eseostrategy' ) ); ?>">@eseostrategy</a></p>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </section>
