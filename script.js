@@ -62,7 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const applyBtn = document.getElementById('apply-discount');
         const discountMsg = document.getElementById('discount-message');
 
-        let isDiscountApplied = false;
+        // COUPON CONFIGURATION
+        // Add new coupons here. Format: "CODE": Discount_Percentage (0.10 = 10%)
+        const COUPON_CODES = {
+            "PRO10": 0.10,
+            "SEO2026": 0.10,
+            // "YOUR_NEW_CODE": 0.20
+        };
+
+        let appliedDiscountRate = 0; // Stores the active discount (e.g., 0.10)
 
         const updateTotalPrice = () => {
             const unitPrice = parseFloat(priceInput.getAttribute('data-unit-price')) || 0;
@@ -70,14 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let total = unitPrice * quantity;
 
-            if (isDiscountApplied) {
-                total = total * 0.90; // Apply 10% discount
+            if (appliedDiscountRate > 0) {
+                total = total * (1 - appliedDiscountRate); // Apply discount
             }
-
-            // Format check: if unit price has no decimals, don't show unnecessarily.
-            // But usually currency has 2. Let's stick to 2 if needed or standard logic.
-            // If the original price string had $, strip it? The URL param usually is raw number or with $.
-            // Let's assume raw number based on previous logic using parseFloat(price).
 
             priceInput.value = total.toFixed(2);
         };
@@ -91,17 +94,19 @@ document.addEventListener('DOMContentLoaded', () => {
             applyBtn.addEventListener('click', () => {
                 const code = discountInput.value.trim().toUpperCase();
 
-                if (isDiscountApplied) {
+                if (appliedDiscountRate > 0) {
                      discountMsg.textContent = "Discount already applied!";
                      discountMsg.style.color = 'orange';
                      return;
                 }
 
-                if (code === 'SEO2026' || code === 'PRO10') {
-                    isDiscountApplied = true;
+                // Check if code exists in our configuration
+                if (COUPON_CODES.hasOwnProperty(code)) {
+                    appliedDiscountRate = COUPON_CODES[code];
                     updateTotalPrice();
 
-                    discountMsg.textContent = "Success! 10% discount applied.";
+                    const percent = appliedDiscountRate * 100;
+                    discountMsg.textContent = `Success! ${percent}% discount applied.`;
                     discountMsg.style.color = 'var(--accent-color)';
                     applyBtn.disabled = true;
                     applyBtn.textContent = 'Applied';
