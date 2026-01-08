@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const COUPON_CODES = {
             "PRO10": 0.10,
             "SEO2026": 0.10,
-            // "YOUR_NEW_CODE": 0.20
+            "TEST": 0.100
         };
 
         let appliedDiscountRate = 0; // Stores the active discount (e.g., 0.10)
