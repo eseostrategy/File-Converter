@@ -1,3 +1,15 @@
+/*
+Theme Name: ESEO Strategy
+Theme URI: https://eseostrategy.com
+Author: Jules
+Author URI: https://eseostrategy.com
+Description: A modern dark theme for SEO Agency
+Version: 1.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: eseo-strategy
+*/
+
 :root {
     --bg-dark: #0B0F19;
     --bg-card: rgba(255, 255, 255, 0.05);

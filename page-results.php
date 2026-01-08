@@ -1,35 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Case Studies - ESEO Strategy</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <!-- Header -->
-    <header>
-        <div class="container">
-            <nav>
-                <div class="logo">
-                    <i class="fas fa-chart-line"></i>
-                    ESEO<span>STRATEGY</span>
-                </div>
-                <div class="nav-links">
-                    <a href="index.html">Home</a>
-                    <a href="services.html">Services</a>
-                    <a href="about.html">About Us</a>
-                    <a href="case-studies.html" class="active">Results</a>
-                    <a href="pricing.html">Pricing</a>
-                    <a href="contact.html">Contact</a>
-                </div>
-                <div class="mobile-toggle">
-                    <i class="fas fa-bars"></i>
-                </div>
-            </nav>
-        </div>
-    </header>
+<?php
+/* Template Name: Results */
+get_header(); ?>
 
     <!-- Page Hero -->
     <section class="page-hero fade-in">
@@ -91,59 +62,9 @@
 
             <div style="text-align: center; margin-top: 80px;" class="fade-in">
                 <h2>Ready to be our next success story?</h2>
-                <a href="contact.html" class="btn btn-primary" style="margin-top: 20px;">Start Your Journey</a>
+                <a href="<?php echo home_url('/contact'); ?>" class="btn btn-primary" style="margin-top: 20px;">Start Your Journey</a>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <div class="logo">
-                        <i class="fas fa-chart-line"></i>
-                        ESEO<span>STRATEGY</span>
-                    </div>
-                    <p style="margin-top: 1rem;">Premium SEO services for ambitious brands. We help you dominate your niche.</p>
-                    <div class="social-links">
-                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                    </div>
-                </div>
-                <div class="footer-col">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="services.html">Services</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="contact.html">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Services</h3>
-                    <ul>
-                        <li><a href="services.html">SEO Audit</a></li>
-                        <li><a href="services.html">Link Building</a></li>
-                        <li><a href="services.html">Content Strategy</a></li>
-                        <li><a href="services.html">Technical SEO</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Contact Info</h3>
-                    <ul>
-                        <li><i class="fas fa-envelope"></i> contact@eseostrategy.com</li>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Digital Ave, Tech City</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>&copy; 2023 ESEO Strategy. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="script.js"></script>
-</body>
-</html>
+<?php get_footer(); ?>
