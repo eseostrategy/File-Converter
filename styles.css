@@ -289,6 +289,38 @@ body {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Page Header (for sub-pages) */
+.page-header {
+    position: relative;
+    padding-top: 8rem;
+    padding-bottom: 5rem;
+    background-color: var(--color-bg-start);
+    overflow: hidden;
+    text-align: center;
+}
+
+.page-header .hero-bg-grid,
+.page-header .hero-bg-radial {
+    opacity: 0.5;
+}
+
+.page-header-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+.page-header-description {
+    color: var(--color-text-muted);
+    max-width: 36rem;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+}
+
 /* Hero Visual (3D Graph) */
 .hero-visual {
     display: none;
