@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEO Strategy | Data-Driven SEO Solutions</title>
+    <title>Contact Us - ESEO Strategy</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -17,12 +17,12 @@
                     ESEO<span>STRATEGY</span>
                 </div>
                 <div class="nav-links">
-                    <a href="index.html" class="active">Home</a>
+                    <a href="index.html">Home</a>
                     <a href="services.html">Services</a>
                     <a href="about.html">About Us</a>
                     <a href="case-studies.html">Results</a>
                     <a href="pricing.html">Pricing</a>
-                    <a href="contact.html">Contact</a>
+                    <a href="contact.html" class="active">Contact</a>
                 </div>
                 <div class="mobile-toggle">
                     <i class="fas fa-bars"></i>
@@ -31,63 +31,57 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
+    <!-- Page Hero -->
+    <section class="page-hero fade-in">
         <div class="container">
-            <div class="hero-content fade-in">
-                <h1>Data-Driven SEO Solutions That Rank & Convert</h1>
-                <p class="lead">Dominate search results with our premium SEO strategies designed for high-competition niches like Casino, Betting, and iGaming. We deliver traffic, rankings, and measurable ROI.</p>
-                <div class="hero-btns">
-                    <a href="contact.html" class="btn btn-primary">Get Free SEO Audit</a>
-                    <a href="services.html" class="btn btn-secondary">View Services</a>
-                </div>
-            </div>
+            <h1>Get In Touch</h1>
+            <p>Ready to dominate your niche? Let's discuss your strategy.</p>
         </div>
     </section>
 
-    <!-- Trust/Stats Section -->
-    <section class="stats-section">
+    <!-- Contact Section -->
+    <section class="contact-section">
         <div class="container">
-            <div class="stats-grid fade-in">
-                <div class="stat-card glass-card">
-                    <span class="stat-number">500+</span>
-                    <p>Clients Ranked</p>
-                </div>
-                <div class="stat-card glass-card">
-                    <span class="stat-number">98%</span>
-                    <p>Retention Rate</p>
-                </div>
-                <div class="stat-card glass-card">
-                    <span class="stat-number">10M+</span>
-                    <p>Traffic Generated</p>
-                </div>
-                <div class="stat-card glass-card">
-                    <span class="stat-number">24/7</span>
-                    <p>Support</p>
-                </div>
+            <div class="glass-card contact-form fade-in">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" class="form-control" placeholder="Your Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" class="form-control" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="website">Website URL</label>
+                        <input type="url" id="website" class="form-control" placeholder="https://yourwebsite.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="service">Interested In</label>
+                        <select id="service" class="form-control">
+                            <option value="general">General Inquiry</option>
+                            <option value="audit">Free SEO Audit</option>
+                            <option value="link-building">Link Building</option>
+                            <option value="content">Content Strategy</option>
+                            <option value="consulting">Consulting</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" class="form-control" placeholder="Tell us about your goals..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                </form>
             </div>
-        </div>
-    </section>
 
-    <!-- Value Proposition -->
-    <section class="features">
-        <div class="container">
-            <h2 class="fade-in">Why Choose <span>ESEO Strategy?</span></h2>
-            <div class="services-grid">
-                <div class="glass-card fade-in">
-                    <i class="fas fa-rocket service-icon"></i>
-                    <h3>Speed & Performance</h3>
-                    <p>We optimize your site for lightning-fast load times and core web vitals that Google loves.</p>
+            <div class="stats-grid fade-in" style="margin-top: 80px; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <div class="stat-card">
+                    <i class="fas fa-envelope" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
+                    <p>contact@eseostrategy.com</p>
                 </div>
-                <div class="glass-card fade-in">
-                    <i class="fas fa-search-dollar service-icon"></i>
-                    <h3>High ROI Focus</h3>
-                    <p>Our strategies are tailored to maximize your return on investment, targeting keywords that convert.</p>
-                </div>
-                <div class="glass-card fade-in">
-                    <i class="fas fa-shield-alt service-icon"></i>
-                    <h3>Safe & Secure</h3>
-                    <p>We use white-hat techniques to ensure your rankings are safe from algorithm updates.</p>
+                <div class="stat-card">
+                    <i class="fas fa-map-marker-alt" style="font-size: 2rem; color: var(--primary-blue); margin-bottom: 15px;"></i>
+                    <p>123 Digital Ave, Tech City</p>
                 </div>
             </div>
         </div>
@@ -142,5 +136,16 @@
     </footer>
 
     <script src="script.js"></script>
+    <script>
+        // Simple URL parameter handling to pre-select service or plan
+        const urlParams = new URLSearchParams(window.location.search);
+        const plan = urlParams.get('plan');
+        if (plan) {
+            const messageBox = document.getElementById('message');
+            if (messageBox) {
+                messageBox.value = `I'm interested in the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan.`;
+            }
+        }
+    </script>
 </body>
 </html>
