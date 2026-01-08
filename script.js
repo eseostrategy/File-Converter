@@ -1,77 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Dynamic Year
-    const yearElement = document.getElementById('year');
-    if (yearElement) {
-        yearElement.textContent = new Date().getFullYear();
+    // Dynamic Year
+    const yearSpan = document.getElementById('year');
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
     }
 
-    // 2. Navbar Scroll Effect
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 20) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
+    // Hamburger Menu
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
 
-    // 3. Mobile Menu Toggle
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
-
-    // Add close button to mobile menu if not present
-    if (mobileMenu && !mobileMenu.querySelector('.close-menu-btn')) {
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
-        closeBtn.className = 'mobile-menu-btn close-menu-btn';
-        closeBtn.style.position = 'absolute';
-        closeBtn.style.top = '1.5rem';
-        closeBtn.style.right = '1.5rem';
-        closeBtn.style.display = 'block';
-
-        closeBtn.addEventListener('click', () => {
-            mobileMenu.classList.remove('active');
-            document.body.style.overflow = '';
-        });
-
-        mobileMenu.appendChild(closeBtn);
-    }
-
-    if (mobileMenuBtn && mobileMenu) {
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('active');
-            // Prevent body scroll when menu is open
-            if (mobileMenu.classList.contains('active')) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
-        });
-
-        // Close menu when clicking a link (except dropdown toggles)
-        const mobileLinks = mobileMenu.querySelectorAll('a:not(.mobile-dropdown-toggle)');
-        mobileLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            });
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
         });
     }
 
-    // 4. Mobile Dropdown Toggle
-    const mobileDropdownToggles = document.querySelectorAll('.mobile-dropdown-toggle');
-    mobileDropdownToggles.forEach(toggle => {
-        toggle.addEventListener('click', (e) => {
+    // Mobile Dropdown Toggle
+    const dropdown = document.querySelector('.dropdown');
+    const dropdownToggle = document.querySelector('.dropdown-toggle');
+
+    if (dropdown && dropdownToggle && window.innerWidth <= 768) {
+        dropdownToggle.addEventListener('click', (e) => {
             e.preventDefault();
-            const dropdown = toggle.closest('.mobile-dropdown');
             dropdown.classList.toggle('active');
-
-            // Rotate icon
-            const icon = toggle.querySelector('i');
-            if (icon) {
-                icon.style.transform = dropdown.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0)';
-                icon.style.transition = 'transform 0.3s';
-            }
         });
+    }
+
+    // Sticky Navbar (Optional visual effect)
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            header.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
+        } else {
+            header.style.boxShadow = "var(--shadow)";
+        }
     });
 });
