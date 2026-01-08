@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const discountMsg = document.getElementById('discount-message');
 
         // COUPON CONFIGURATION
-        // Add new coupons here. Format: "CODE": Discount_Percentage (0.10 = 10%)
+        // Add new coupons here. Format: "CODE": Discount_Percentage (0.10 = 100%)
         const COUPON_CODES = {
             "PRO10": 0.10,
             "SEO2026": 0.10,
