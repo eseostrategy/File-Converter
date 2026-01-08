@@ -827,3 +827,39 @@ footer {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
+
+/* Payment Page Styles */
+.payment-details {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: rgba(59, 130, 246, 0.05);
+    border-radius: 5px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    text-align: left;
+    border: 1px dashed var(--border-color);
+}
+
+.payment-details strong {
+    color: var(--secondary-color);
+}
+
+/* Footer Payment Icons */
+.payment-methods-footer {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.payment-methods-footer i {
+    font-size: 2rem;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.payment-methods-footer i:hover {
+    color: var(--primary-color);
+    transform: translateY(-3px);
+}
