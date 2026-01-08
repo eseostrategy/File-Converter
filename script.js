@@ -1,57 +1,60 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Update year in footer
-    document.getElementById('year').textContent = new Date().getFullYear();
+    // 1. Dynamic Year
+    const yearElement = document.getElementById('year');
+    if (yearElement) {
+        yearElement.textContent = new Date().getFullYear();
+    }
 
-    // Navbar scroll effect
+    // 2. Navbar Scroll Effect
     const navbar = document.getElementById('navbar');
-
-    const handleScroll = () => {
-        if (window.scrollY > 50) {
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 20) {
             navbar.classList.add('scrolled');
         } else {
             navbar.classList.remove('scrolled');
         }
-    };
+    });
 
-    window.addEventListener('scroll', handleScroll);
+    // 3. Mobile Menu Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-    // Initial check
-    handleScroll();
+    // Add close button to mobile menu if not present
+    if (mobileMenu && !mobileMenu.querySelector('.close-menu-btn')) {
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.className = 'mobile-menu-btn close-menu-btn';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.top = '1.5rem';
+        closeBtn.style.right = '1.5rem';
+        closeBtn.style.display = 'block';
 
-    // Mobile menu toggle (simple implementation)
-    const toggleButton = document.querySelector('.mobile-menu-toggle');
-    const navLinks = document.querySelector('.nav-links');
+        closeBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        });
 
-    if (toggleButton) {
-        toggleButton.addEventListener('click', () => {
-            // In a real implementation, you would probably toggle a class to show/hide the menu
-            // Since the CSS provided hides .nav-links on mobile by default and shows it on md up
-            // we'd need to add a class to override the display property for mobile.
-            // For now, let's just log it or add a simple inline style toggle for demonstration if needed,
-            // but the prompt didn't strictly require mobile menu implementation beyond layout.
-            // Let's add a 'mobile-open' class to nav-links
+        mobileMenu.appendChild(closeBtn);
+    }
 
-            if (navLinks.style.display === 'flex') {
-                navLinks.style.display = 'none';
-                navLinks.style.position = '';
-                navLinks.style.top = '';
-                navLinks.style.left = '';
-                navLinks.style.width = '';
-                navLinks.style.height = '';
-                navLinks.style.backgroundColor = '';
-                navLinks.style.flexDirection = '';
-                navLinks.style.padding = '';
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('active');
+            // Prevent body scroll when menu is open
+            if (mobileMenu.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
             } else {
-                navLinks.style.display = 'flex';
-                navLinks.style.position = 'absolute';
-                navLinks.style.top = '100%';
-                navLinks.style.left = '0';
-                navLinks.style.width = '100%';
-                navLinks.style.height = '100vh';
-                navLinks.style.backgroundColor = 'rgba(0,0,0,0.95)';
-                navLinks.style.flexDirection = 'column';
-                navLinks.style.padding = '2rem';
+                document.body.style.overflow = '';
             }
+        });
+
+        // Close menu when clicking a link
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
         });
     }
 });

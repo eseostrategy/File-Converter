@@ -4,43 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Services - eseostrategy</title>
-    <meta name="description" content="Explore our comprehensive SEO services designed to boost your online visibility.">
-
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Navbar -->
-    <nav id="navbar" class="navbar">
+    <nav class="navbar" id="navbar">
         <div class="container navbar-container">
-            <div class="logo-container">
-                <a href="index.html" style="text-decoration: none;">
-                    <span class="logo-text">eseostrategy</span>
-                </a>
-            </div>
+            <a href="index.html" class="logo">eseostrategy</a>
 
             <div class="nav-links">
-                <a href="services.html" class="nav-link" style="color: var(--color-primary);">Services</a>
-                <a href="#" class="nav-link">Case Studies</a>
-                <a href="#" class="nav-link">About</a>
-                <a href="#" class="nav-cta">Get Free Audit</a>
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="services.html" class="nav-link active">Services</a>
+                <a href="monthly-seo.html" class="nav-link">Monthly SEO</a>
+                <a href="about.html" class="nav-link">About Us</a>
+                <a href="contact.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Get Free Audit</a>
             </div>
 
-            <div class="mobile-menu-toggle">
+            <button class="mobile-menu-btn" id="mobile-menu-btn">
                 <i class="fas fa-bars"></i>
-            </div>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="services.html">Services</a>
+            <a href="monthly-seo.html">Monthly SEO</a>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact</a>
         </div>
     </nav>
 
     <!-- Page Header -->
-    <section class="page-header">
+    <header class="page-header">
         <div class="hero-bg-grid"></div>
         <div class="hero-bg-radial"></div>
 
@@ -50,120 +48,177 @@
                 Comprehensive SEO solutions tailored to elevate your brand and drive sustainable growth.
             </p>
         </div>
-    </section>
+    </header>
 
-    <main>
-        <!-- Services Section -->
-        <section id="services" class="services-section">
-            <div class="container">
-                <div class="services-grid">
-                    <!-- Service Card 1 -->
-                    <div class="service-card group">
+    <!-- Services Section -->
+    <section class="services-section">
+        <div class="container">
+            <div class="services-grid">
+                <!-- Monthly SEO -->
+                <a href="monthly-seo.html" style="text-decoration: none;">
+                    <div class="service-card">
                         <div class="card-glow"></div>
                         <div class="card-content">
                             <div class="card-icon">
                                 <i class="fas fa-chart-line"></i>
                             </div>
                             <h3 class="card-title">Monthly SEO Package</h3>
-                            <p class="card-description">Maximize your online potential with our comprehensive monthly SEO packages, tailored to meet your unique needs. We provide continuous optimization to keep you ahead.</p>
+                            <p class="card-description">
+                                Maximize your online potential with our comprehensive monthly SEO packages, tailored to meet your unique needs.
+                            </p>
                         </div>
                     </div>
-                    <!-- Service Card 2 -->
-                    <div class="service-card group">
+                </a>
+
+                <!-- PBN Backlinks -->
+                <a href="pbn-backlinks.html" style="text-decoration: none;">
+                    <div class="service-card">
                         <div class="card-glow"></div>
                         <div class="card-content">
                             <div class="card-icon">
                                 <i class="fas fa-link"></i>
                             </div>
                             <h3 class="card-title">PBN Backlinks</h3>
-                            <p class="card-description">Boost your website's authority with our high-quality, diverse PBN backlinks. Carefully curated networks to ensure maximum impact and safety for your rankings.</p>
+                            <p class="card-description">
+                                Boost your website's authority with our high-quality, diverse PBN backlinks.
+                            </p>
                         </div>
                     </div>
-                    <!-- Service Card 3 -->
-                    <div class="service-card group">
+                </a>
+
+                <!-- TF PBN Backlinks -->
+                <a href="#" style="text-decoration: none;">
+                    <div class="service-card">
+                        <div class="card-glow"></div>
+                        <div class="card-content">
+                            <div class="card-icon">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                            <h3 class="card-title">TF PBN Backlinks</h3>
+                            <p class="card-description">
+                                High Trust Flow PBN backlinks to pass maximum link juice and improve your site's authority metrics.
+                            </p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Guest Post -->
+                <a href="guest-post.html" style="text-decoration: none;">
+                    <div class="service-card">
                         <div class="card-glow"></div>
                         <div class="card-content">
                             <div class="card-icon">
                                 <i class="fas fa-layer-group"></i>
                             </div>
                             <h3 class="card-title">Guest Post</h3>
-                            <p class="card-description">Improve your website's online visibility with high-quality guest posts on authoritative sites. Build credibility and drive referral traffic with strategic content placement.</p>
+                            <p class="card-description">
+                                Improve your website's online visibility with high-quality guest posts on authoritative sites.
+                            </p>
                         </div>
                     </div>
-                    <!-- Service Card 4 -->
-                    <div class="service-card group">
+                </a>
+
+                <!-- SEO Backlinks -->
+                <a href="seo-backlinks.html" style="text-decoration: none;">
+                    <div class="service-card">
                         <div class="card-glow"></div>
                         <div class="card-content">
                             <div class="card-icon">
                                 <i class="fas fa-search"></i>
                             </div>
                             <h3 class="card-title">SEO Backlinks</h3>
-                            <p class="card-description">Boost your website's search engine rankings with our diverse, high-quality SEO backlinks. A mix of strategies to create a natural and powerful link profile.</p>
+                            <p class="card-description">
+                                Boost your website's search engine rankings with our diverse, high-quality SEO backlinks.
+                            </p>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
+                </a>
 
-        <!-- CTA Section -->
-        <section class="cta-section">
-            <div class="container cta-container">
-                <h2 class="cta-title">Ready to Dominate Search Results?</h2>
-                <p class="cta-subtitle">Get a free preliminary audit of your website today.</p>
-                <form class="cta-form">
-                    <input type="url" placeholder="Enter your website URL" class="cta-input" required>
-                    <button type="submit" class="cta-button">Get Free Audit</button>
-                </form>
+                <!-- DA Follow Backlink -->
+                <a href="#" style="text-decoration: none;">
+                    <div class="service-card">
+                        <div class="card-glow"></div>
+                        <div class="card-content">
+                            <div class="card-icon">
+                                <i class="fas fa-external-link-alt"></i>
+                            </div>
+                            <h3 class="card-title">DA Follow Backlink</h3>
+                            <p class="card-description">
+                                High Domain Authority do-follow backlinks to significantly impact your SERP positions.
+                            </p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- INCREASE DA 50 -->
+                <a href="#" style="text-decoration: none;">
+                    <div class="service-card">
+                        <div class="card-glow"></div>
+                        <div class="card-content">
+                            <div class="card-icon">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <h3 class="card-title">INCREASE DA 50</h3>
+                            <p class="card-description">
+                                Guaranteed service to increase your website's Domain Authority to 50+ within a specific timeframe.
+                            </p>
+                        </div>
+                    </div>
+                </a>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container footer-grid">
-            <div class="footer-brand">
-                <span class="footer-logo">eseostrategy</span>
-                <p class="footer-text">
-                    Elevating brands through intelligent search strategies. We help you get found by the people who matter most.
-                </p>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="footer-logo">eseostrategy</a>
+                    <p class="footer-text">
+                        Welcome to our SEO backlink service! We specialize in providing high-quality backlinks to help improve the visibility and ranking of your website on search engines.
+                    </p>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/eseostrategy/"><i class="fab fa-facebook"></i></a>
+                        <a href="https://twitter.com/Mobeen_DMN"><i class="fab fa-twitter"></i></a>
+                        <a href="https://eseostrategy.com/"><i class="fab fa-instagram"></i></a>
+                        <a href="https://eseostrategy.com/"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="footer-heading">Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-heading">Our Services</h4>
+                    <ul>
+                        <li><a href="monthly-seo.html">Monthly SEO Package</a></li>
+                        <li><a href="pbn-backlinks.html">PBN Backlinks</a></li>
+                        <li><a href="guest-post.html">Guest Post</a></li>
+                        <li><a href="seo-backlinks.html">SEO Backlinks</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-heading">Contact Us</h4>
+                    <ul>
+                        <li><i class="fas fa-phone"></i> +92 3113793342</li>
+                        <li><i class="fas fa-envelope"></i> support@eseostrategy.com</li>
+                        <li><i class="fab fa-skype"></i> @eseostrategy</li>
+                        <li><i class="fab fa-telegram"></i> @eseostrategy</li>
+                    </ul>
+                </div>
             </div>
 
-            <div class="footer-links">
-                <h4 class="footer-heading">Services</h4>
-                <ul>
-                    <li><a href="#">SEO Audit</a></li>
-                    <li><a href="#">Content Strategy</a></li>
-                    <li><a href="#">Technical SEO</a></li>
-                    <li><a href="#">Link Building</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-contact">
-                <h4 class="footer-heading">Contact Us</h4>
-                <ul>
-                    <li>
-                        <a href="mailto:support@eseostrategy.com">
-                            <i class="fas fa-envelope"></i> support@eseostrategy.com
-                        </a>
-                    </li>
-                    <li>
-                        <a href="https://wa.me/923113793342">
-                            <i class="fab fa-whatsapp"></i> +92 311 3793342
-                        </a>
-                    </li>
-                    <li><i class="fas fa-map-marker-alt"></i> Pakistan</li>
-                    <li><i class="far fa-clock"></i> Monday to Friday</li>
-                    <li class="social-links">
-                        <a href="https://join.skype.com/invite/vnB22p2eSrCb">Skype</a>
-                        <a href="https://t.me/eseostrategy">Telegram</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <div class="container">
-                © <span id="year"></span> eseostrategy. All rights reserved.
+            <div class="footer-bottom">
+                <p>&copy; <span id="year">2022</span> Eseo Strategy. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
