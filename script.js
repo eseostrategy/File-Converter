@@ -48,15 +48,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (service) document.getElementById('order-service').value = service;
         if (plan) document.getElementById('order-plan').value = plan;
-        if (price) document.getElementById('order-price').value = price;
+        if (price) {
+            const priceEl = document.getElementById('order-price');
+            priceEl.value = price;
+            // Store immutable unit price
+            priceEl.setAttribute('data-unit-price', price);
+        }
 
-        // --- Discount Logic ---
+        // --- Quantity & Price Logic ---
+        const quantityInput = document.getElementById('order-quantity');
+        const priceInput = document.getElementById('order-price');
         const discountInput = document.getElementById('discount-code');
         const applyBtn = document.getElementById('apply-discount');
         const discountMsg = document.getElementById('discount-message');
-        const priceInput = document.getElementById('order-price');
-        let originalPrice = parseFloat(price) || 0;
+
         let isDiscountApplied = false;
+
+        const updateTotalPrice = () => {
+            const unitPrice = parseFloat(priceInput.getAttribute('data-unit-price')) || 0;
+            const quantity = parseInt(quantityInput.value) || 1;
+
+            let total = unitPrice * quantity;
+
+            if (isDiscountApplied) {
+                total = total * 0.90; // Apply 10% discount
+            }
+
+            // Format check: if unit price has no decimals, don't show unnecessarily.
+            // But usually currency has 2. Let's stick to 2 if needed or standard logic.
+            // If the original price string had $, strip it? The URL param usually is raw number or with $.
+            // Let's assume raw number based on previous logic using parseFloat(price).
+
+            priceInput.value = total.toFixed(2);
+        };
+
+        if (quantityInput) {
+            quantityInput.addEventListener('input', updateTotalPrice);
+            quantityInput.addEventListener('change', updateTotalPrice);
+        }
 
         if (applyBtn && discountInput) {
             applyBtn.addEventListener('click', () => {
@@ -68,19 +97,12 @@ document.addEventListener('DOMContentLoaded', () => {
                      return;
                 }
 
-                if (originalPrice === 0 && priceInput.value) {
-                    originalPrice = parseFloat(priceInput.value);
-                }
-
                 if (code === 'SEO2026' || code === 'PRO10') {
-                    // Apply 10% discount
-                    const discount = originalPrice * 0.10;
-                    const newPrice = originalPrice - discount;
-                    priceInput.value = newPrice.toFixed(2);
+                    isDiscountApplied = true;
+                    updateTotalPrice();
 
                     discountMsg.textContent = "Success! 10% discount applied.";
                     discountMsg.style.color = 'var(--accent-color)';
-                    isDiscountApplied = true;
                     applyBtn.disabled = true;
                     applyBtn.textContent = 'Applied';
                 } else {
