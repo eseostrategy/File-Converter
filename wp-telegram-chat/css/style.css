@@ -1,0 +1,100 @@
+#wtc-chat-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #0088cc;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 60px;
+    font-size: 30px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 9999;
+}
+
+#wtc-chat-widget {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
+    font-family: sans-serif;
+    overflow: hidden;
+}
+
+#wtc-chat-header {
+    background-color: #0088cc;
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+}
+
+#wtc-chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wtc-message {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 15px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.wtc-message.user {
+    align-self: flex-end;
+    background-color: #0088cc;
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+
+.wtc-message.admin {
+    align-self: flex-start;
+    background-color: #e5e5e5;
+    color: black;
+    border-bottom-left-radius: 2px;
+}
+
+#wtc-chat-input-area {
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    background: white;
+}
+
+#wtc-chat-input {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 20px;
+    margin-right: 5px;
+    outline: none;
+}
+
+#wtc-send-btn {
+    background-color: #0088cc;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+#wtc-send-btn:hover {
+    background-color: #0077b3;
+}
