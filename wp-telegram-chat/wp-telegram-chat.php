@@ -63,7 +63,7 @@ function wtc_bot_token_cb() {
 function wtc_chat_id_cb() {
     $options = get_option('wtc_settings');
     echo '<input type="text" name="wtc_settings[wtc_chat_id]" value="' . esc_attr($options['wtc_chat_id'] ?? '') . '" class="regular-text">';
-    echo '<p class="description">Your Telegram numeric User ID. Send a message to your bot to find it (or use @userinfobot).</p>';
+    echo '<p class="description">Your Telegram numeric User ID. Since you mentioned <b>@eseostrategy</b>, use a bot like @userinfobot to find the numeric ID for that account.</p>';
 }
 
 function wtc_webhook_url_cb() {
@@ -103,7 +103,10 @@ add_action('wp_footer', 'wtc_add_chat_widget');
 function wtc_add_chat_widget() {
     ?>
     <div id="wtc-chat-widget">
-        <div id="wtc-chat-header">Chat with us</div>
+        <div id="wtc-chat-header">
+            Chat with us
+            <a href="https://t.me/eseostrategy" target="_blank" style="color:white; float:right; text-decoration:none; font-size:12px;">(or Open Telegram)</a>
+        </div>
         <div id="wtc-chat-messages"></div>
         <div id="wtc-chat-input-area">
             <input type="text" id="wtc-chat-input" placeholder="Type a message...">
@@ -136,7 +139,7 @@ add_action('rest_api_init', function () {
 function wtc_handle_send_message($request) {
     global $wpdb;
     $params = $request->get_json_params();
-    $message = sanitize_text_field($params['message']);
+    $message = sanitize_textarea_field($params['message']);
     $session_id = sanitize_text_field($params['session_id']);
 
     if (empty($message) || empty($session_id)) {
