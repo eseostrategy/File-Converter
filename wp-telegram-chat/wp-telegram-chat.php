@@ -48,6 +48,7 @@ function wtc_settings_init() {
     add_settings_section('wtc_plugin_main', 'Settings', 'wtc_settings_section_cb', 'wp-telegram-chat');
     add_settings_field('wtc_bot_token', 'Bot Token', 'wtc_bot_token_cb', 'wp-telegram-chat', 'wtc_plugin_main');
     add_settings_field('wtc_chat_id', 'Chat ID (User ID)', 'wtc_chat_id_cb', 'wp-telegram-chat', 'wtc_plugin_main');
+    add_settings_field('wtc_telegram_link', 'Your Telegram Link', 'wtc_telegram_link_cb', 'wp-telegram-chat', 'wtc_plugin_main');
     add_settings_field('wtc_webhook_url', 'Webhook URL', 'wtc_webhook_url_cb', 'wp-telegram-chat', 'wtc_plugin_main');
 }
 
@@ -64,6 +65,13 @@ function wtc_chat_id_cb() {
     $options = get_option('wtc_settings');
     echo '<input type="text" name="wtc_settings[wtc_chat_id]" value="' . esc_attr($options['wtc_chat_id'] ?? '') . '" class="regular-text">';
     echo '<p class="description">Your Telegram numeric User ID. Since you mentioned <b>@eseostrategy</b>, use a bot like @userinfobot to find the numeric ID for that account.</p>';
+}
+
+function wtc_telegram_link_cb() {
+    $options = get_option('wtc_settings');
+    $value = $options['wtc_telegram_link'] ?? 'https://t.me/eseostrategy';
+    echo '<input type="text" name="wtc_settings[wtc_telegram_link]" value="' . esc_attr($value) . '" class="regular-text">';
+    echo '<p class="description">Paste your Telegram link here (e.g. https://t.me/username). This will appear in the chat header.</p>';
 }
 
 function wtc_webhook_url_cb() {
@@ -101,11 +109,15 @@ function wtc_enqueue_scripts() {
 // Add chat container to footer
 add_action('wp_footer', 'wtc_add_chat_widget');
 function wtc_add_chat_widget() {
+    $options = get_option('wtc_settings');
+    $tg_link = $options['wtc_telegram_link'] ?? 'https://t.me/eseostrategy';
     ?>
     <div id="wtc-chat-widget">
         <div id="wtc-chat-header">
             Chat with us
-            <a href="https://t.me/eseostrategy" target="_blank" style="color:white; float:right; text-decoration:none; font-size:12px;">(or Open Telegram)</a>
+            <?php if ($tg_link): ?>
+            <a href="<?php echo esc_url($tg_link); ?>" target="_blank" style="color:white; float:right; text-decoration:none; font-size:12px;">(or Open Telegram)</a>
+            <?php endif; ?>
         </div>
         <div id="wtc-chat-messages"></div>
         <div id="wtc-chat-input-area">
