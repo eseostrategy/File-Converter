@@ -3,255 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Converter</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #6c5ce7;
-            --success-color: #00b894;
-            --error-color: #d63031;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 2rem;
-        }
-
-        .container {
-            background-color: white;
-            padding: 2.5rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-
-        h1 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 2.2rem;
-        }
-
-        .upload-section {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            margin: 1.5rem 0;
-        }
-
-        .file-input-wrapper input[type="file"] {
-            opacity: 0;
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-            left: 0;
-            top: 0;
-        }
-
-        .custom-file-input {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            border: 2px dashed #ced4da;
-            border-radius: 10px;
-            background-color: #f8f9fa;
-            transition: all 0.3s ease;
-            pointer-events: none;
-        }
-
-        .file-input-wrapper:hover .custom-file-input {
-            border-color: var(--primary-color);
-            background-color: rgba(74, 144, 226, 0.05);
-        }
-
-        .upload-icon {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-right: 0.8rem;
-        }
-
-        select {
-            width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            background-color: white;
-            font-size: 1rem;
-            margin: 1rem 0;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 1em;
-            cursor: pointer;
-            z-index: 2;
-            position: relative;
-        }
-
-        select:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-
-        .convert-btn {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 1.1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .convert-btn:hover {
-            background-color: #357abd;
-            transform: translateY(-2px);
-        }
-
-        .download-link {
-            display: none;
-            width: 100%;
-            background-color: var(--success-color);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-top: 1.5rem;
-            transition: all 0.3s ease;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 184, 148, 0.1);
-        }
-
-        .download-link:hover {
-            background-color: #00a382;
-            transform: translateY(-2px);
-        }
-
-        .filename {
-            color: #495057;
-            font-size: 0.9rem;
-            margin: 0.5rem 0;
-            text-align: center;
-        }
-
-        .error {
-            color: white;
-            background-color: var(--error-color);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
-            align-items: center;
-        }
-    </style>
+    <title>eseostrategy - Professional SEO Agency</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1><i class="fas fa-file-import"></i> File Converter</h1>
-        <div class="upload-section">
-            <div class="file-input-wrapper">
-                <div class="custom-file-input">
-                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                    <span>Choose a file</span>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">eseostrategy</div>
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services</a>
+                        <div class="dropdown-menu">
+                            <a href="monthly-seo.html" class="dropdown-item">Monthly SEO Package</a>
+                            <a href="pbn-backlinks.html" class="dropdown-item">PBN Backlinks</a>
+                            <a href="tf-pbn-backlinks.html" class="dropdown-item">TF PBN Backlinks</a>
+                            <a href="guest-post.html" class="dropdown-item">Guest Post</a>
+                            <a href="seo-backlinks.html" class="dropdown-item">SEO Backlinks</a>
+                            <a href="da-follow-backlink.html" class="dropdown-item">DA Follow Backlink</a>
+                            <a href="increase-da-50.html" class="dropdown-item">INCREASE DA 50</a>
+                            <a href="edu-guest-post.html" class="dropdown-item">EDU Guest Post</a>
+                        </div>
+                    </div>
+                    <a href="about.html">About Us</a>
+                    <a href="contact.html" class="btn btn-primary">Get Free Audit</a>
                 </div>
-                <input type="file" id="fileInput" accept="*/*">
-            </div>
-            <div class="filename" id="filename"></div>
-            <select id="formatSelect">
-                <option value="jpg">JPG Format</option>
-                <option value="png">PNG Format</option>
-            </select>
-            <button class="convert-btn" onclick="convertFile()">
-                <i class="fas fa-exchange-alt"></i> Convert Now
-            </button>
-            <a class="download-link" id="downloadLink">
-                <i class="fas fa-download"></i> Download Converted File
-            </a>
-            <div class="error" id="errorMessage">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Error message here</span>
+                <div class="hamburger">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-content">
+            <h1>Perfect Keyword,<br>Perfect SEO</h1>
+            <p>Maximizing online visibility through data-driven SEO strategies. Revolutionizing online presence through creative, data-driven SEO strategies.</p>
+            <div>
+                <a href="services.html" class="btn btn-primary">Explore Services</a>
+                <a href="contact.html" class="btn btn-secondary">Contact Us</a>
             </div>
         </div>
-    </div>
+    </section>
 
-    <script>
-        let originalFileName = '';
-        let originalFileExtension = '';
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Services</h2>
+                <p>Comprehensive SEO solutions tailored to elevate your brand and drive sustainable growth.</p>
+            </div>
+            <div class="services-grid">
+                <!-- Service 1 -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Monthly SEO Package</h3>
+                    <p>Complete monthly SEO management to steadily improve your rankings.</p>
+                    <a href="monthly-seo.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <!-- Service 2 -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <h3>PBN Backlinks</h3>
+                    <p>High-power Private Blog Network links to boost authority.</p>
+                    <a href="pbn-backlinks.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <!-- Service 3 -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <h3>TF PBN Backlinks</h3>
+                    <p>Trust Flow focused PBN links for higher quality metrics.</p>
+                    <a href="tf-pbn-backlinks.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <!-- Service 4 -->
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-pen-nib"></i>
+                    </div>
+                    <h3>Guest Post</h3>
+                    <p>Secure placements on relevant blogs to drive traffic and reputation.</p>
+                    <a href="guest-post.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+                 <!-- Service 5 -->
+                 <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>SEO Backlinks</h3>
+                    <p>Diverse backlink packages to build a natural link profile.</p>
+                    <a href="seo-backlinks.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+                 <!-- Service 6 -->
+                 <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-external-link-alt"></i>
+                    </div>
+                    <h3>DA Follow Backlink</h3>
+                    <p>High Domain Authority Do-Follow links for maximum juice.</p>
+                    <a href="da-follow-backlink.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+                 <!-- Service 7 -->
+                 <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3>INCREASE DA 50</h3>
+                    <p>Guaranteed strategies to boost your Domain Authority to 50+.</p>
+                    <a href="increase-da-50.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+                 <!-- Service 8 -->
+                 <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3>EDU Guest Post</h3>
+                    <p>Exclusive guest posts on .edu domains for ultimate trust.</p>
+                    <a href="edu-guest-post.html" class="btn-small">Learn More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                originalFileName = file.name.split('.').slice(0, -1).join('.');
-                originalFileExtension = file.name.split('.').pop();
-                document.getElementById('filename').textContent = `Selected file: ${file.name}`;
-                document.getElementById('errorMessage').style.display = 'none';
-            }
-        });
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>About eseostrategy</h2>
+                    <p>We are a team of experienced digital marketers and developers passionate about helping businesses thrive in the competitive online landscape. With a special focus on the iGaming and high-competition sectors, we understand the unique challenges and opportunities in this space.</p>
+                    <p>Our mission is to provide transparent, effective, and results-driven services that deliver a real return on investment for our clients. Whether you need to climb the search rankings or overhaul your website's look, we have the expertise to make it happen.</p>
+                    <a href="contact.html" class="btn btn-primary">Contact Us</a>
+                </div>
+                <div class="about-image">
+                    <!-- Placeholder Box -->
+                    <div class="placeholder-box">
+                        <span>About eseostrategy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        function convertFile() {
-            const fileInput = document.getElementById('fileInput');
-            const formatSelect = document.getElementById('formatSelect');
-            const downloadLink = document.getElementById('downloadLink');
-            const errorMessage = document.getElementById('errorMessage');
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>Get In Touch</h3>
+                    <p style="margin-bottom: 30px;">Ready to grow your business? Fill out the form or contact us directly.</p>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Karachi, Pakistan</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>support@eseostrategy.com</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+92 3113793342</span>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <form action="#" method="POST">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="service">Service Interested In</label>
+                            <select id="service" name="service">
+                                <option value="monthly-seo">Monthly SEO Package</option>
+                                <option value="pbn-backlinks">PBN Backlinks</option>
+                                <option value="tf-pbn-backlinks">TF PBN Backlinks</option>
+                                <option value="guest-post">Guest Post</option>
+                                <option value="seo-backlinks">SEO Backlinks</option>
+                                <option value="da-follow-backlink">DA Follow Backlink</option>
+                                <option value="increase-da-50">INCREASE DA 50</option>
+                                <option value="edu-guest-post">EDU Guest Post</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            if (!fileInput.files[0]) {
-                errorMessage.textContent = 'Please select a file first!';
-                errorMessage.style.display = 'flex';
-                return;
-            }
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h4>eseostrategy</h4>
+                    <p>Your partner in digital success. We specialize in high-impact SEO and design strategies for competitive niches.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="payment.html">Payment Methods</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="monthly-seo.html">Monthly SEO</a></li>
+                        <li><a href="pbn-backlinks.html">PBN Backlinks</a></li>
+                        <li><a href="guest-post.html">Guest Post</a></li>
+                        <li><a href="seo-backlinks.html">SEO Backlinks</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="https://www.facebook.com/eseostrategy/"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com/Mobeen_DMN"><i class="fab fa-twitter"></i></a>
+                        <a href="https://eseostrategy.com/"><i class="fab fa-instagram"></i></a>
+                        <a href="https://eseostrategy.com/"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
 
-            const file = fileInput.files[0];
-            const selectedFormat = formatSelect.value;
+                <div class="payment-methods-footer">
+                    <i class="fab fa-cc-visa" title="Visa"></i>
+                    <i class="fab fa-cc-mastercard" title="MasterCard"></i>
+                    <i class="fab fa-paypal" title="PayPal"></i>
+                    <i class="fab fa-bitcoin" title="Crypto"></i>
+                </div>
+        <p>&copy; <span id="year"></span> eseostrategy. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-
-                        // Fix MIME type for JPG
-                        const mimeType = selectedFormat === 'jpg' ? 'image/jpeg' : 'image/png';
-                        const dataUrl = canvas.toDataURL(mimeType, 0.9);
-                        
-                        downloadLink.href = dataUrl;
-                        downloadLink.download = `${originalFileName}.${selectedFormat}`;
-                        downloadLink.textContent = `Download ${originalFileName}.${selectedFormat}`;
-                        downloadLink.style.display = 'flex';
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                errorMessage.textContent = 'Non-image files require server-side conversion!';
-                errorMessage.style.display = 'flex';
-            }
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
