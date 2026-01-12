@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mobile Navigation Toggle
     const mobileToggle = document.querySelector('.mobile-toggle');
     const navLinks = document.querySelector('.nav-links');
+    const dropdowns = document.querySelectorAll('.dropdown');
 
     if (mobileToggle) {
         mobileToggle.addEventListener('click', () => {
@@ -16,6 +17,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Mobile Dropdown Toggle
+    dropdowns.forEach(dropdown => {
+        const link = dropdown.querySelector('a');
+        const icon = link.querySelector('i');
+
+        // Toggle on icon click for mobile
+        if (icon) {
+            icon.addEventListener('click', (e) => {
+                // Only for mobile/responsive view
+                if (window.getComputedStyle(mobileToggle).display !== 'none') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropdown.classList.toggle('active');
+                }
+            });
+        }
+    });
 
     // Scroll Animations using Intersection Observer
     const animatedElements = document.querySelectorAll('.fade-in, .fade-up');
