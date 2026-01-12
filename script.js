@@ -1,52 +1,72 @@
-let originalFileName = '';
+document.addEventListener('DOMContentLoaded', () => {
+    // Mobile Navigation Toggle
+    const mobileToggle = document.querySelector('.mobile-toggle');
+    const navLinks = document.querySelector('.nav-links');
+    const dropdowns = document.querySelectorAll('.dropdown');
 
-document.getElementById('fileInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        originalFileName = file.name.split('.').slice(0, -1).join('.');
-        document.getElementById('filename').textContent = `Selected file: ${file.name}`;
-        document.getElementById('errorMessage').style.display = 'none';
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            const icon = mobileToggle.querySelector('i');
+            if (navLinks.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
     }
+
+    // Mobile Dropdown Toggle
+    dropdowns.forEach(dropdown => {
+        const link = dropdown.querySelector('a');
+        const icon = link.querySelector('i');
+
+        // Toggle on icon click for mobile
+        if (icon) {
+            icon.addEventListener('click', (e) => {
+                // Only for mobile/responsive view
+                if (window.getComputedStyle(mobileToggle).display !== 'none') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropdown.classList.toggle('active');
+                }
+            });
+        }
+    });
+
+    // Scroll Animations using Intersection Observer
+    const animatedElements = document.querySelectorAll('.fade-in, .fade-up');
+
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    animatedElements.forEach(el => {
+        observer.observe(el);
+    });
+
+    // Header scroll effect
+    const navbar = document.querySelector('.navbar');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            navbar.style.backgroundColor = 'rgba(11, 15, 25, 0.95)';
+            navbar.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        } else {
+            navbar.style.backgroundColor = 'rgba(11, 15, 25, 0.8)';
+            navbar.style.boxShadow = 'none';
+        }
+    });
 });
-
-function convertFile() {
-    const fileInput = document.getElementById('fileInput');
-    const formatSelect = document.getElementById('formatSelect');
-    const downloadLink = document.getElementById('downloadLink');
-    const errorMessage = document.getElementById('errorMessage');
-
-    if (!fileInput.files[0]) {
-        errorMessage.textContent = 'Please select a file first!';
-        errorMessage.style.display = 'block';
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const selectedFormat = formatSelect.value;
-
-    // Convert to image (works for image files)
-    if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                const dataUrl = canvas.toDataURL(`image/${selectedFormat}`);
-                downloadLink.href = dataUrl;
-                downloadLink.download = `${originalFileName}.${selectedFormat}`;
-                downloadLink.textContent = `Download ${originalFileName}.${selectedFormat}`;
-                downloadLink.style.display = 'block';
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    } else {
-        errorMessage.textContent = 'Non-image files require server-side conversion!';
-        errorMessage.style.display = 'block';
-    }
-}
