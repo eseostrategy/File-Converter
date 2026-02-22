@@ -1,0 +1,41 @@
+<Window x:Class="DragonCursorCompanion.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dragon Cursor Companion - Settings" Height="350" Width="300"
+        ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Dragon Size:" FontWeight="Bold" Margin="0,0,0,5"/>
+        <ComboBox x:Name="ComboSize" Grid.Row="1" Margin="0,0,0,15"/>
+
+        <TextBlock Text="Animation Intensity:" Grid.Row="2" FontWeight="Bold" Margin="0,0,0,5"/>
+        <ComboBox x:Name="ComboIntensity" Grid.Row="3" Margin="0,0,0,15"/>
+
+        <StackPanel Grid.Row="4">
+            <CheckBox x:Name="CheckLowPower" Content="Low Power Mode" Margin="0,0,0,10"/>
+            <CheckBox x:Name="CheckAutoStart" Content="Run on Windows Startup" Margin="0,0,0,10"/>
+            <DockPanel LastChildFill="False" Margin="0,0,0,10">
+                <TextBlock Text="FPS Cap:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <ComboBox x:Name="ComboFPS" Width="80">
+                    <ComboBoxItem Content="30"/>
+                    <ComboBoxItem Content="60"/>
+                    <ComboBoxItem Content="144"/>
+                </ComboBox>
+            </DockPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="BtnSave" Content="Save" Width="80" Height="25" Click="BtnSave_Click" Margin="0,0,10,0"/>
+            <Button x:Name="BtnCancel" Content="Cancel" Width="80" Height="25" Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

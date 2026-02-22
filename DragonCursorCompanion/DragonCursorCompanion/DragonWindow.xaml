@@ -1,0 +1,23 @@
+<Window x:Class="DragonCursorCompanion.DragonWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Dragon Companion" Height="300" Width="300"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        Left="0" Top="0">
+    <Grid>
+        <Image x:Name="DragonImage" Source="pack://siteoforigin:,,,/Resources/dragon.png"
+               HorizontalAlignment="Center" VerticalAlignment="Center"
+               RenderTransformOrigin="0.5,0.5" Width="100" Height="100">
+            <Image.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="DragonScale" ScaleX="1" ScaleY="1"/>
+                    <RotateTransform x:Name="DragonRotate" Angle="0"/>
+                </TransformGroup>
+            </Image.RenderTransform>
+        </Image>
+    </Grid>
+</Window>
