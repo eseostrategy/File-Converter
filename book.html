@@ -52,8 +52,54 @@
     </div>
 
     <main class="container py-4" id="main-content">
-        <!-- Content will be injected here -->
-    </main>
+<div class="content-section" style="max-width: 600px; margin: 0 auto;">
+    <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: var(--primary-color); text-align: center; margin-bottom: 10px;">Book Your Free Quote</h2>
+        <p style="text-align: center; margin-bottom: 20px; color: var(--accent-green); font-weight: bold;">Submit this form to save $20 on Bulk Removal!</p>
+        <p style="text-align: center; margin-bottom: 30px; font-size: 0.9rem;">Same-Day or Next-Day Service availability.</p>
+
+        <form id="booking-form" style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Full Name *</label>
+                <input type="text" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Phone Number *</label>
+                    <input type="tel" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Email Address</label>
+                    <input type="email" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Service Address (City/Zip) *</label>
+                <input type="text" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">What needs to be removed? *</label>
+                <textarea rows="4" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+
+            <div>
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Preferred Date</label>
+                <input type="date" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 15px; margin-top: 10px;">Request In-Person Quote</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: #666;">
+            <p>We provide no-pressure quotes and never charge hidden fees.</p>
+        </div>
+    </div>
+</div>
+
+</main>
 
     <footer>
         <div class="container">
