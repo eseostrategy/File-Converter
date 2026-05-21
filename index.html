@@ -3,255 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Converter</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #6c5ce7;
-            --success-color: #00b894;
-            --error-color: #d63031;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 2rem;
-        }
-
-        .container {
-            background-color: white;
-            padding: 2.5rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-
-        h1 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 2.2rem;
-        }
-
-        .upload-section {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            margin: 1.5rem 0;
-        }
-
-        .file-input-wrapper input[type="file"] {
-            opacity: 0;
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-            left: 0;
-            top: 0;
-        }
-
-        .custom-file-input {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            border: 2px dashed #ced4da;
-            border-radius: 10px;
-            background-color: #f8f9fa;
-            transition: all 0.3s ease;
-            pointer-events: none;
-        }
-
-        .file-input-wrapper:hover .custom-file-input {
-            border-color: var(--primary-color);
-            background-color: rgba(74, 144, 226, 0.05);
-        }
-
-        .upload-icon {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-right: 0.8rem;
-        }
-
-        select {
-            width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            background-color: white;
-            font-size: 1rem;
-            margin: 1rem 0;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 1em;
-            cursor: pointer;
-            z-index: 2;
-            position: relative;
-        }
-
-        select:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-
-        .convert-btn {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 1.1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .convert-btn:hover {
-            background-color: #357abd;
-            transform: translateY(-2px);
-        }
-
-        .download-link {
-            display: none;
-            width: 100%;
-            background-color: var(--success-color);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-top: 1.5rem;
-            transition: all 0.3s ease;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 184, 148, 0.1);
-        }
-
-        .download-link:hover {
-            background-color: #00a382;
-            transform: translateY(-2px);
-        }
-
-        .filename {
-            color: #495057;
-            font-size: 0.9rem;
-            margin: 0.5rem 0;
-            text-align: center;
-        }
-
-        .error {
-            color: white;
-            background-color: var(--error-color);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
-            align-items: center;
-        }
-    </style>
+    <title>Junk Removal Pros - Fast, Affordable & Eco-Friendly</title>
+    <meta name="description" content="Local junk removal company offering same-day service, affordable pricing, and eco-friendly disposal. We donate and recycle up to 80% of items.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h1><i class="fas fa-file-import"></i> File Converter</h1>
-        <div class="upload-section">
-            <div class="file-input-wrapper">
-                <div class="custom-file-input">
-                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                    <span>Choose a file</span>
-                </div>
-                <input type="file" id="fileInput" accept="*/*">
+<body style="background-color: var(--bg-main);">
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-info">
+                <span><i class="fas fa-phone"></i> <a href="tel:5551234567" style="color: inherit;">(555) 123-4567</a></span>
+                <span><i class="fas fa-envelope"></i> <a href="mailto:info@junkremovalpros.com" style="color: inherit;">info@junkremovalpros.com</a></span>
+                <span><i class="fas fa-clock"></i> Open 7AM-7PM</span>
             </div>
-            <div class="filename" id="filename"></div>
-            <select id="formatSelect">
-                <option value="jpg">JPG Format</option>
-                <option value="png">PNG Format</option>
-            </select>
-            <button class="convert-btn" onclick="convertFile()">
-                <i class="fas fa-exchange-alt"></i> Convert Now
-            </button>
-            <a class="download-link" id="downloadLink">
-                <i class="fas fa-download"></i> Download Converted File
-            </a>
-            <div class="error" id="errorMessage">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Error message here</span>
+            <div class="top-bar-social">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-yelp"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-google"></i> Google Reviews</a>
             </div>
         </div>
     </div>
 
-    <script>
-        let originalFileName = '';
-        let originalFileExtension = '';
+    <!-- Header -->
+    <header class="header">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem var(--spacing-sm);">
+            <a href="index.html" class="logo">
+                <i class="fas fa-truck-pickup"></i> JunkRemoval Pros
+            </a>
 
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                originalFileName = file.name.split('.').slice(0, -1).join('.');
-                originalFileExtension = file.name.split('.').pop();
-                document.getElementById('filename').textContent = `Selected file: ${file.name}`;
-                document.getElementById('errorMessage').style.display = 'none';
-            }
-        });
+            <button class="mobile-menu-btn" aria-label="Toggle Menu">
+                <i class="fas fa-bars"></i>
+            </button>
 
-        function convertFile() {
-            const fileInput = document.getElementById('fileInput');
-            const formatSelect = document.getElementById('formatSelect');
-            const downloadLink = document.getElementById('downloadLink');
-            const errorMessage = document.getElementById('errorMessage');
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="services.html">Services</a></li>
+                    <li><a href="locations.html">Locations</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="how-it-works.html">How It Works</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
 
-            if (!fileInput.files[0]) {
-                errorMessage.textContent = 'Please select a file first!';
-                errorMessage.style.display = 'flex';
-                return;
-            }
+            <div class="header-actions">
+                <a href="tel:5551234567" class="btn btn-outline"><i class="fas fa-phone mr-2"></i> Call Now</a>
+                <a href="sms:5551234567" class="btn btn-outline" style="margin-left: 0.5rem;"><i class="fas fa-comment mr-2"></i> Text Us</a>
+                <a href="book-now.html" class="btn btn-primary" style="margin-left: 0.5rem;">Book Online</a>
+            </div>
+        </div>
+    </header>
 
-            const file = fileInput.files[0];
-            const selectedFormat = formatSelect.value;
 
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
 
-                        // Fix MIME type for JPG
-                        const mimeType = selectedFormat === 'jpg' ? 'image/jpeg' : 'image/png';
-                        const dataUrl = canvas.toDataURL(mimeType, 0.9);
-                        
-                        downloadLink.href = dataUrl;
-                        downloadLink.download = `${originalFileName}.${selectedFormat}`;
-                        downloadLink.textContent = `Download ${originalFileName}.${selectedFormat}`;
-                        downloadLink.style.display = 'flex';
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                errorMessage.textContent = 'Non-image files require server-side conversion!';
-                errorMessage.style.display = 'flex';
-            }
-        }
-    </script>
+
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Professional Junk Removal You Can Trust</h1>
+                <p>Locally owned and operated in Aubrey, TX. We recycle and donate 60%–80% of all items. Same-day service available!</p>
+
+                <div class="hero-badges">
+                    <span class="badge"><i class="fas fa-check-circle"></i> Best Price Guarantee</span>
+                    <span class="badge"><i class="fas fa-bolt"></i> Same/Next Day Service</span>
+                    <span class="badge"><i class="fas fa-leaf"></i> Eco-Friendly</span>
+                </div>
+
+                <div class="flex gap-sm">
+                    <a href="book-now.html" class="btn btn-accent">Save $20 - Book Online</a>
+                    <a href="sms:5551234567" class="btn btn-primary">Text Us</a>
+                </div>
+            </div>
+
+            <div class="hero-form">
+                <div class="booking-card">
+                    <h3>Get a Free, No-Pressure Quote</h3>
+                    <p class="text-center text-muted" style="margin-bottom: 1rem;">No hidden fees. In-person quotes available.</p>
+                    <form class="booking-form">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>What do you need removed?</label>
+                            <select class="form-control" required>
+                                <option value="">Select Service...</option>
+                                <option value="furniture">Furniture Removal</option>
+                                <option value="appliances">Appliance Removal</option>
+                                <option value="cleanout">House/Garage Cleanout</option>
+                                <option value="construction">Construction Debris</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Get Quote</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Bar -->
+    <div class="trust-bar">
+        <div class="container trust-metrics">
+            <div class="metric-item">
+                <span class="metric-number">400+</span>
+                <span class="metric-text">5-Star Reviews</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-number">4</span>
+                <span class="metric-text">Years Experience</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-number">3,000+</span>
+                <span class="metric-text">Completed Jobs</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-number">20-30%</span>
+                <span class="metric-text">More Affordable</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Why Choose Us?</h2>
+            <div class="grid grid-3">
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-recycle"></i></div>
+                    <div class="card-content">
+                        <h4 class="card-title">Eco-Friendly Disposal</h4>
+                        <p class="card-text text-center">We care about our community. We recycle and donate approximately 60%–80% of all items to local donation and recycling centers.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-tags"></i></div>
+                    <div class="card-content">
+                        <h4 class="card-title">Affordable Pricing</h4>
+                        <p class="card-text text-center">Our pricing is typically 20%–30% more affordable than franchise competitors, and we offer a Best Price Guarantee.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-users"></i></div>
+                    <div class="card-content">
+                        <h4 class="card-title">Locally Owned</h4>
+                        <p class="card-text text-center">We are a locally owned and operated business with real people doing real work in Aubrey, TX and surrounding areas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section section-light">
+        <div class="container">
+            <h2 class="section-title">Real Reviews from Real Customers</h2>
+            <div class="grid grid-3" style="margin-bottom: 2rem;">
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Incredible service! They came same-day, gave a very fair in-person quote, and hauled away my old couch in minutes. Highly recommend!"</p>
+                    <div class="testimonial-author">Sarah J.</div>
+                    <div class="testimonial-source"><i class="fab fa-google"></i> Google Review</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Much more affordable than the big franchise guys. Love that they try to donate things instead of just throwing them away."</p>
+                    <div class="testimonial-author">Mike T.</div>
+                    <div class="testimonial-source"><i class="fab fa-yelp"></i> Yelp Review</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Fast, friendly, and efficient. Called them in the morning and my garage was clean by the afternoon."</p>
+                    <div class="testimonial-author">Amanda R.</div>
+                    <div class="testimonial-source"><i class="fab fa-facebook"></i> Facebook Review</div>
+                </div>
+            </div>
+
+            <div class="grid grid-2" style="max-width: 800px; margin: 0 auto;">
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Professional guys. Swept up after they finished clearing out my old shed. A+."</p>
+                    <div class="testimonial-author">David L.</div>
+                    <div class="testimonial-source"><i class="fas fa-thumbtack" style="color: #009FD4;"></i> Thumbtack Review</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">"Found them on the app and they did not disappoint. Best junk haulers in Aubrey!"</p>
+                    <div class="testimonial-author">Jessica W.</div>
+                    <div class="testimonial-source"><i class="fas fa-home" style="color: #8ED100;"></i> Nextdoor Review</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="index.html" class="logo text-light" style="margin-bottom: 1rem; display: inline-flex;">
+                        <i class="fas fa-truck-pickup"></i> JunkRemoval Pros
+                    </a>
+                    <p>Locally owned and operated in Aubrey, TX. Delivering reliable, eco-friendly, and affordable junk removal.</p>
+                    <p class="font-bold text-primary" style="margin-top: 1rem;">Discounts available for Military Veterans, First Responders, and Senior Citizens.</p>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="book-now.html">Book Now</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="locations.html">Locations</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="how-it-works.html">How It Works</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="contact.html">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Contact Info</h4>
+                    <ul class="footer-contact">
+                        <li><i class="fas fa-phone"></i> <a href="tel:5551234567" style="color: inherit;">(555) 123-4567</a></li>
+                        <li><i class="fas fa-envelope"></i> <a href="mailto:info@junkremovalpros.com" style="color: inherit;">info@junkremovalpros.com</a></li>
+                        <li><i class="fas fa-map-marker-alt"></i> Aubrey, TX</li>
+                        <li><i class="fas fa-clock"></i> Open 7AM-7PM</li>
+                        <li><i class="fab fa-google"></i> <a href="#" style="color: inherit;">Google Reviews</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="footer-title">Payment Methods</h4>
+                    <p>We accept:</p>
+                    <div class="payment-methods">
+                        <i class="fab fa-cc-visa" title="Visa"></i>
+                        <i class="fab fa-cc-mastercard" title="Mastercard"></i>
+                        <i class="fab fa-cc-discover" title="Discover"></i>
+                        <i class="fab fa-cc-amex" title="American Express"></i>
+                        <i class="fab fa-apple" title="Apple Pay"></i>
+                        <i class="fab fa-google-pay" title="Google Pay"></i>
+                    </div>
+                    <p style="margin-top: 0.5rem; font-size: 0.875rem;">Also: Zelle, Cash App, Venmo</p>
+                </div>
+            </div>
+
+            <div class="text-center" style="margin-bottom: 1rem;">
+                <a href="terms.html" style="color: #cbd5e1; margin: 0 10px;">Terms & Conditions</a>
+                <a href="privacy.html" style="color: #cbd5e1; margin: 0 10px;">Privacy Policy</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; <span id="currentYear"></span> Junk Removal Pros. All rights reserved. | <a href="sitemap.html" style="color: #94a3b8;">Sitemap</a></p>
+                <p style="font-size: 0.75rem; margin-top: 5px;">If you want to create a professional website, then the design should be free.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+
 </body>
 </html>

@@ -1,52 +1,57 @@
-let originalFileName = '';
+document.addEventListener('DOMContentLoaded', () => {
+    // Mobile Menu Toggle
+    const mobileBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
 
-document.getElementById('fileInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        originalFileName = file.name.split('.').slice(0, -1).join('.');
-        document.getElementById('filename').textContent = `Selected file: ${file.name}`;
-        document.getElementById('errorMessage').style.display = 'none';
+    if (mobileBtn && navLinks) {
+        mobileBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            const icon = mobileBtn.querySelector('i');
+            if (navLinks.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
     }
+
+    // Set current year in footer
+    const yearSpan = document.getElementById('currentYear');
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+    }
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                // Close mobile menu if open
+                if (navLinks && navLinks.classList.contains('active')) {
+                    navLinks.classList.remove('active');
+                    const icon = mobileBtn.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Simple form submission handler (prevent default for demo purposes)
+    const bookingForms = document.querySelectorAll('.booking-form');
+    bookingForms.forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Thank you for booking! We will contact you shortly.');
+            form.reset();
+        });
+    });
 });
-
-function convertFile() {
-    const fileInput = document.getElementById('fileInput');
-    const formatSelect = document.getElementById('formatSelect');
-    const downloadLink = document.getElementById('downloadLink');
-    const errorMessage = document.getElementById('errorMessage');
-
-    if (!fileInput.files[0]) {
-        errorMessage.textContent = 'Please select a file first!';
-        errorMessage.style.display = 'block';
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const selectedFormat = formatSelect.value;
-
-    // Convert to image (works for image files)
-    if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                const dataUrl = canvas.toDataURL(`image/${selectedFormat}`);
-                downloadLink.href = dataUrl;
-                downloadLink.download = `${originalFileName}.${selectedFormat}`;
-                downloadLink.textContent = `Download ${originalFileName}.${selectedFormat}`;
-                downloadLink.style.display = 'block';
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    } else {
-        errorMessage.textContent = 'Non-image files require server-side conversion!';
-        errorMessage.style.display = 'block';
-    }
-}
