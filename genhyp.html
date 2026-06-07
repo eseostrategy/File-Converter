@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Bulk Hyperlinks</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #6c5ce7;
+            --success-color: #00b894;
+            --error-color: #d63031;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+        }
+
+        body.dark-mode {
+            --primary-color: #61a0eb;
+            --secondary-color: #8275e8;
+            --success-color: #00d1a7;
+            --error-color: #ff5252;
+            --background-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 900px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        body.dark-mode .container {
+            background-color: #2a2a2a;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.2rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .col {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        small {
+            font-weight: normal;
+            color: #666;
+        }
+
+        body.dark-mode small {
+            color: #aaa;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 150px;
+            box-sizing: border-box;
+            background-color: white;
+            color: #333;
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        body.dark-mode textarea {
+            background-color: #333;
+            border-color: #444;
+            color: #f0f0f0;
+        }
+
+        body.dark-mode textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled, .btn-secondary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        body.dark-mode .btn-secondary {
+            background-color: #555;
+        }
+
+        body.dark-mode .btn-secondary:hover {
+            background-color: #444;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 2rem;
+            border-top: 2px solid #e9ecef;
+            padding-top: 2rem;
+        }
+
+        body.dark-mode .result-section {
+            border-top-color: #444;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .copy-btn {
+            background-color: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            align-self: flex-start;
+        }
+
+        .copy-btn:hover {
+            background-color: #00a382;
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary-color);
+            transform: none;
+        }
+
+        /* Footer constraints */
+        footer {
+            margin-top: auto;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .payment-methods {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+
+        .service-area {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+
+    <div class="container">
+        <h1><i class="fas fa-link"></i> URL to HTML Hyperlink</h1>
+
+        <div class="row">
+            <div class="col">
+                <label for="urls">Enter URLs <small>(each per line)</small></label>
+                <textarea id="urls" placeholder="https://www.example.com&#10;https://www.wosgroup.com" oninput="checkInputs()"></textarea>
+            </div>
+            <div class="col">
+                <label for="keywords">Enter Keywords <small>(each per line)</small></label>
+                <textarea id="keywords" placeholder="Example Site&#10;Web Agency" oninput="checkInputs()"></textarea>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-secondary" id="resetBtn" onclick="resetForm()" disabled>
+                <i class="fas fa-undo"></i> Reset
+            </button>
+            <button class="btn-primary" id="generateBtn" onclick="generateLinks()" disabled>
+                <i class="fas fa-magic"></i> Generate Hyperlinks
+            </button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="row">
+                <div class="col">
+                    <label for="resHtml">Results <small>(HTML Format)</small></label>
+                    <textarea id="resHtml" readonly></textarea>
+                    <button class="copy-btn" onclick="copyToClipboard('resHtml')">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div class="col">
+                    <label for="resBbcode">Results <small>(Forum Code / BBCode)</small></label>
+                    <textarea id="resBbcode" readonly></textarea>
+                    <button class="copy-btn" onclick="copyToClipboard('resBbcode')">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div>&copy; 2024 Your Company. All rights reserved.</div>
+        <div class="payment-methods">
+            Accepted Payment Methods: Visa, Mastercard, Discover, Amex, Zelle, Apple Pay, Google/Android Pay, Cash App, Venmo
+        </div>
+        <div class="service-area">
+            Service Area: Nationwide
+        </div>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        function checkInputs() {
+            const urls = document.getElementById('urls').value;
+            const keywords = document.getElementById('keywords').value;
+            const hasInput = urls.length > 0 || keywords.length > 0;
+            const canGenerate = urls.length > 0 && keywords.length > 0;
+
+            document.getElementById('resetBtn').disabled = !hasInput;
+            document.getElementById('generateBtn').disabled = !canGenerate;
+        }
+
+        function resetForm() {
+            document.getElementById('urls').value = '';
+            document.getElementById('keywords').value = '';
+            document.getElementById('resHtml').value = '';
+            document.getElementById('resBbcode').value = '';
+            document.getElementById('resultSection').classList.remove('active');
+            checkInputs();
+        }
+
+        function generateLinks() {
+            const urls = document.getElementById('urls').value.split('\n');
+            const keywords = document.getElementById('keywords').value.split('\n');
+
+            let htmlResult = '';
+            let bbcodeResult = '';
+
+            const maxLen = Math.max(urls.length, keywords.length);
+
+            for (let i = 0; i < maxLen; i++) {
+                const url = (urls[i] || '').trim();
+                const keyword = (keywords[i] || '').trim();
+
+                if (url) {
+                    const kw = keyword || url; // Fallback to URL if no keyword provided
+                    htmlResult += `<a href="${url}">${kw}</a>\n`;
+                    bbcodeResult += `[url=${url}]${kw}[/url]\n`;
+                }
+            }
+
+            document.getElementById('resHtml').value = htmlResult;
+            document.getElementById('resBbcode').value = bbcodeResult;
+
+            document.getElementById('resultSection').classList.add('active');
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyToClipboard(elementId) {
+            const copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); /* For mobile devices */
+            document.execCommand("copy");
+
+            // Temporary feedback on the button
+            const btn = copyText.nextElementSibling;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
