@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk URL Indexer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="indexer.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="index.html" class="nav-link"><i class="fas fa-file-import"></i> File Converter</a>
+        <a href="indexer.html" class="nav-link active"><i class="fas fa-search"></i> URL Indexer</a>
+    </nav>
+
+    <div class="container">
+        <h1><i class="fas fa-search"></i> Bulk URL Indexer</h1>
+        <div class="upload-section">
+            <label for="urlInput" class="input-label">Enter URLs (one per line):</label>
+            <textarea id="urlInput" class="text-input textarea-input" placeholder="https://example.com/page1&#10;https://example.com/page2" rows="6"></textarea>
+
+            <label for="searchEngineSelect" class="input-label">Select Search Engine:</label>
+            <select id="searchEngineSelect">
+                <option value="google">Google</option>
+                <option value="bing">Bing</option>
+                <option value="yahoo">Yahoo</option>
+                <option value="yandex">Yandex</option>
+            </select>
+
+            <button class="convert-btn" onclick="startBulkIndexing()" id="submitBtn">
+                <i class="fas fa-paper-plane"></i> Start Bulk Indexing
+            </button>
+
+            <div class="progress-container" id="progressContainer" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Processing 0 of 0 URLs</div>
+            </div>
+
+            <div class="log-container" id="logContainer" style="display: none;">
+                <h3>Indexing Log</h3>
+                <ul id="logList" class="log-list"></ul>
+            </div>
+
+            <div class="error" id="indexErrorMessage">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Error message here</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="indexer.js"></script>
+</body>
+</html>

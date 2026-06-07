@@ -161,4 +161,38 @@
         align-items: center;
         gap: 0.8rem;
     }
+
+    .top-nav {
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    .nav-link {
+        flex: 1;
+        text-align: center;
+        padding: 1rem;
+        text-decoration: none;
+        color: #495057;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+    }
+
+    .nav-link:hover {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+    }
+
+    .nav-link.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+        background-color: rgba(74, 144, 226, 0.05);
+    }
 </style>
