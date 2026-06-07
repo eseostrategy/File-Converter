@@ -163,39 +163,49 @@
             margin-top: 1rem;
             display: none;
             align-items: center;
-            gap: 0.8rem;
         }
 
-        .success {
-            color: white;
-            background-color: var(--success-color);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
-            align-items: center;
-            gap: 0.8rem;
-        }
-
-        .text-input {
+        .top-nav {
             width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
             background-color: white;
-            font-size: 1rem;
-            margin: 1rem 0;
-            box-sizing: border-box;
-            font-family: inherit;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
 
-        .text-input:focus {
-            border-color: var(--primary-color);
-            outline: none;
+        .nav-link {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            text-decoration: none;
+            color: #495057;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            background-color: rgba(74, 144, 226, 0.05);
         }
     </style>
 </head>
 <body>
+    <nav class="top-nav">
+        <a href="index.html" class="nav-link active"><i class="fas fa-file-import"></i> File Converter</a>
+        <a href="indexer.html" class="nav-link"><i class="fas fa-search"></i> URL Indexer</a>
+    </nav>
+
     <div class="container">
         <h1><i class="fas fa-file-import"></i> File Converter</h1>
         <div class="upload-section">
@@ -218,30 +228,6 @@
                 <i class="fas fa-download"></i> Download Converted File
             </a>
             <div class="error" id="errorMessage">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Error message here</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="container" style="margin-top: 2rem;">
-        <h1><i class="fas fa-search"></i> URL Indexer</h1>
-        <div class="upload-section">
-            <input type="url" id="urlInput" class="text-input" placeholder="Enter URL to index (e.g., https://example.com)">
-            <select id="searchEngineSelect">
-                <option value="google">Google</option>
-                <option value="bing">Bing</option>
-                <option value="yahoo">Yahoo</option>
-                <option value="yandex">Yandex</option>
-            </select>
-            <button class="convert-btn" onclick="submitUrlForIndexing()">
-                <i class="fas fa-paper-plane"></i> Index URL
-            </button>
-            <div class="success" id="indexSuccessMessage">
-                <i class="fas fa-check-circle"></i>
-                <span>URL successfully submitted for indexing!</span>
-            </div>
-            <div class="error" id="indexErrorMessage">
                 <i class="fas fa-exclamation-triangle"></i>
                 <span>Error message here</span>
             </div>
@@ -304,41 +290,6 @@
                 errorMessage.textContent = 'Non-image files require server-side conversion!';
                 errorMessage.style.display = 'flex';
             }
-        }
-
-        function submitUrlForIndexing() {
-            const urlInput = document.getElementById('urlInput');
-            const searchEngineSelect = document.getElementById('searchEngineSelect');
-            const successMessage = document.getElementById('indexSuccessMessage');
-            const errorMessage = document.getElementById('indexErrorMessage');
-
-            // Reset messages
-            successMessage.style.display = 'none';
-            errorMessage.style.display = 'none';
-
-            const url = urlInput.value.trim();
-            const engine = searchEngineSelect.value;
-            const engineName = searchEngineSelect.options[searchEngineSelect.selectedIndex].text;
-
-            if (!url) {
-                errorMessage.querySelector('span').textContent = 'Please enter a URL first!';
-                errorMessage.style.display = 'flex';
-                return;
-            }
-
-            try {
-                new URL(url);
-            } catch (e) {
-                errorMessage.querySelector('span').textContent = 'Please enter a valid URL (e.g., https://example.com)!';
-                errorMessage.style.display = 'flex';
-                return;
-            }
-
-            // Simulate API call for indexing
-            setTimeout(() => {
-                successMessage.querySelector('span').textContent = `URL successfully submitted to ${engineName} for indexing!`;
-                successMessage.style.display = 'flex';
-            }, 800);
         }
     </script>
 </body>
