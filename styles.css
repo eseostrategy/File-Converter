@@ -161,4 +161,32 @@
         align-items: center;
         gap: 0.8rem;
     }
+
+    .success {
+        color: white;
+        background-color: var(--success-color);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        display: none;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .text-input {
+        width: 100%;
+        padding: 0.8rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background-color: white;
+        font-size: 1rem;
+        margin: 1rem 0;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+
+    .text-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+    }
 </style>

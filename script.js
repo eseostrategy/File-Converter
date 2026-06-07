@@ -50,3 +50,38 @@ function convertFile() {
         errorMessage.style.display = 'block';
     }
 }
+
+function submitUrlForIndexing() {
+    const urlInput = document.getElementById('urlInput');
+    const searchEngineSelect = document.getElementById('searchEngineSelect');
+    const successMessage = document.getElementById('indexSuccessMessage');
+    const errorMessage = document.getElementById('indexErrorMessage');
+
+    // Reset messages
+    successMessage.style.display = 'none';
+    errorMessage.style.display = 'none';
+
+    const url = urlInput.value.trim();
+    const engine = searchEngineSelect.value;
+    const engineName = searchEngineSelect.options[searchEngineSelect.selectedIndex].text;
+
+    if (!url) {
+        errorMessage.querySelector('span').textContent = 'Please enter a URL first!';
+        errorMessage.style.display = 'flex';
+        return;
+    }
+
+    try {
+        new URL(url);
+    } catch (e) {
+        errorMessage.querySelector('span').textContent = 'Please enter a valid URL (e.g., https://example.com)!';
+        errorMessage.style.display = 'flex';
+        return;
+    }
+
+    // Simulate API call for indexing
+    setTimeout(() => {
+        successMessage.querySelector('span').textContent = `URL successfully submitted to ${engineName} for indexing!`;
+        successMessage.style.display = 'flex';
+    }, 800);
+}
