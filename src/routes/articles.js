@@ -84,11 +84,11 @@ router.post('/preview', (req, res) => {
     const domainMap = new Map(domains.map(d => [d.id, d]));
     const orderedDomains = domain_ids.map(id => domainMap.get(id)).filter(Boolean);
 
-    // Check if any domain is disconnected
-    const disconnectedDomains = orderedDomains.filter(d => d.status !== 'connected');
+    // Check if any domain is disconnected for Post Manager
+    const disconnectedDomains = orderedDomains.filter(d => d.post_manager_status !== 'connected' && d.status !== 'connected');
     if (disconnectedDomains.length > 0) {
       return res.status(400).json({
-        error: `Selected domain ${disconnectedDomains[0].domain} is not connected. All target domains must be connected before publishing.`,
+        error: `Selected domain ${disconnectedDomains[0].domain} is not connected for Post Manager. All target domains must have a connected Post Manager plugin before publishing.`,
         disconnected: disconnectedDomains.map(d => d.domain)
       });
     }
@@ -172,11 +172,11 @@ router.post('/publish', async (req, res) => {
       return res.status(400).json({ error: 'One or more target domains could not be found' });
     }
 
-    // Block submission if any domain is not connected
-    const disconnected = orderedDomains.filter(d => d.status !== 'connected');
+    // Block submission if any domain is not connected for Post Manager
+    const disconnected = orderedDomains.filter(d => d.post_manager_status !== 'connected' && d.status !== 'connected');
     if (disconnected.length > 0) {
       return res.status(400).json({
-        error: `Cannot publish: Domain "${disconnected[0].domain}" is not connected. All selected target domains must be connected.`
+        error: `Cannot publish: Domain "${disconnected[0].domain}" is not connected for Post Manager. All selected target domains must be connected.`
       });
     }
 
@@ -239,7 +239,7 @@ router.post('/publish', async (req, res) => {
             backlink_keyword: pair.keyword
           };
 
-          const wpRes = await sendWpRequest(domain.domain, '/publish', payload, domain.site_key);
+          const wpRes = await sendWpRequest(domain.domain, '/publish', payload, domain.site_key, 'pbn-commander-post/v1');
 
           if (wpRes.success && wpRes.data && wpRes.data.success) {
             const remotePostId = wpRes.data.post_id;

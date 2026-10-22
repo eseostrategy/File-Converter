@@ -4,64 +4,65 @@ PBN Commander is a centralized WordPress website and Private Blog Network (PBN) 
 
 ---
 
+## Dual WordPress Plugin Architecture
+
+PBN Commander uses **two separate, independently installable child plugins** that connect to the same central PBN Commander API using a shared Site API Key and HMAC SHA-256 request signing:
+
+1. **PBN Commander Post Manager** (`pbn-commander-post-manager.zip`)
+   - Handles remote article publishing only (title, HTML content, status, categories, tags, featured images, canonical URLs, and article backlinks).
+   - Exposes REST API namespace: `/wp-json/pbn-commander-post/v1/`
+2. **PBN Commander Sidebar Manager** (`pbn-commander-sidebar-manager.zip`)
+   - Handles sidebar links and backlink widget deployments only (destination URLs, anchor text, `rel` attributes, target attributes, and widget headers).
+   - Exposes REST API namespace: `/wp-json/pbn-commander-sidebar/v1/`
+
+*Note:* Neither plugin requires installing the other. The central dashboard tracks connection statuses independently for each plugin per domain.
+
+---
+
 ## Key Features
 
 - **Modern SaaS Responsive UI:** Responsive single-page application built with HTML5, CSS3, JavaScript (ES6+), FontAwesome, and Inter typography.
 - **Dark Mode & Light Mode:** Toggleable theme with `localStorage` state persistence.
+- **Independent Plugin Status Tracking:** Monitor Post Manager and Sidebar Manager connectivity statuses independently for every registered website.
 - **Domain Selection & Ordering Engine:** Select connected target domains from checkboxes or paste raw domain lists. Resolves pasted domain text against registered connected domains with status badges (*Connected*, *Disconnected*, *Unknown*, *Invalid*), preserves explicit user domain order, and provides up/down reordering controls.
-- **Side-by-Side Multiline Client URL & Keyword Entry:** Two side-by-side multiline text boxes modeled on user specifications ("Client URL" and "Client Keyword"). Supports:
-  - *Different URL & Keyword for each domain:* Line 1 URL pairs with Line 1 Keyword, Line 2 with Line 2, mapped 1-to-1 to Position 1, Position 2 of the ordered domain list.
+- **Side-by-Side Multiline Client URL & Keyword Entry:** Two side-by-side multiline text boxes ("Client URL" and "Client Keyword"). Supports:
+  - *Different URL & Keyword for each domain:* Line N URL pairs with Line N Keyword, mapped 1-to-1 to Position N of the ordered domain list.
   - *Same URL & Keyword for all domains:* One URL and anchor keyword applied across all target domains.
 - **Normal & Spin Syntax Article Engine:**
   - *Normal Article Mode:* Static HTML or plain text content publishing with live preview.
-  - *Spin Syntax Mode:* Supports `{option1|option2}` syntax with nested choice support and fallback handling. Includes two explicit variation strategies: **One unique variation per domain** vs **One shared variation**.
-- **Live Final Ordered Mapping Preview:** Real-time preview table displaying `Order | Target Domain | Client URL | Client Keyword | Content Preview` prior to submission.
+  - *Spin Syntax Mode:* Supports `{option1|option2}` syntax with nested choice support. Offers two explicit variation strategies: **One unique variation per domain** vs **One shared variation**.
+- **Downloadable Campaign Reports (CSV):** Generates downloadable CSV backlink completion reports after each campaign deployment. Includes client URL, keyword, target domain, status, error details, and completion timestamps with safe RFC 4180 CSV escaping.
 - **2-Step Bulk Import Workflow:** Preview parsed CSV/TSV data with row-level status validation (Valid, Duplicate, Invalid) prior to committing valid rows to the database.
-- **Custom Client WordPress Plugin:** Custom WordPress plugin connector (`wordpress-plugin/pbn-commander-client/pbn-commander-client.php`) supporting encrypted HMAC SHA-256 signature authorization, 5-minute replay window protection, REST endpoints (`/ping`, `/publish`, `/sidebar-links`), and custom sidebar link widgets.
-- **Real WordPress Connectivity:** Actual HTTP API requests dispatched with HMAC signature headers to WordPress endpoints (`/wp-json/pbn-commander/v1/ping`, `/publish`, `/sidebar-links`).
-- **Sidebar Link Management Engine:** Apply the same ordered domain selection and side-by-side URL/keyword pairing to sidebar widget link deployments across target sites.
-- **Activity & Security Audit Log:** Complete event audit trail recording site registration, connection checks, article publishing, sidebar deployments, and security events.
 - **Security Hardening:** Express Rate Limiting, Helmet HTTP security headers, input sanitization, timing-safe HMAC signature verification, SSRF blocking of loopback/private IPs, and secure site key masking.
 
 ---
 
-## Article Publishing & Sidebar Link Workflows
+## Plugin Setup & Installation Instructions
 
-### 1. Selected Target Domains & Ordering
-1. Select target websites via checkboxes or paste domain names in the **Manual Domain Paste Box** (one domain per line).
-2. Click **Resolve & Order Domains**. The system matches pasted lines against registered connected domains in SQLite, highlights status badges (*Connected*, *Disconnected*, *Unknown*, *Invalid*), and checks the matched connected sites.
-3. Adjust domain priority using the **Up** and **Down** arrow buttons. This exact order determines how URLs, keywords, and spin syntax variations are assigned.
+### 1. Post Manager Plugin Setup
+1. In PBN Commander Dashboard, open the **WP Plugins Client** tab.
+2. Click **Download Post Manager ZIP** (`pbn-commander-post-manager.zip`).
+3. In child WordPress admin panel (`https://yourchildsite.com/wp-admin`), go to **Plugins &rarr; Add New &rarr; Upload Plugin**, upload `pbn-commander-post-manager.zip`, and click **Activate Plugin**.
+4. Click on **PBN Post Manager** in your WordPress sidebar.
+5. In PBN Commander Dashboard, copy your domain's generated **Site API Key** and paste it into the plugin settings page. Click **Save Credentials**.
+6. In PBN Commander Dashboard, click **Ping Post Manager** to verify connectivity.
 
-### 2. Side-by-Side URL & Keyword Entry
-1. In the **Backlink URL & Keyword Entry** section, choose your assignment mode:
-   - **Different URL & Keyword for each domain:** Paste one Client URL per line in the left box and one Client Keyword per line in the right box. Line N pairs with Line N for Domain N.
-   - **Same URL & Keyword for all selected domains:** Enter one URL and one keyword applied to all target domains.
-2. The **Final Ordered Mapping Preview** table updates in real time to show the exact row-by-row mapping (`Order | Target Domain | Client URL | Client Keyword | Content Preview`).
-
-### 3. Normal & Spin Syntax Article Modes
-- **Normal Article:** Paste or write static HTML content.
-- **Spin Syntax Article:** Write or paste HTML containing `{option 1|option 2|option 3}` syntax.
-  - Choose **One unique variation per domain** to generate a distinct, deterministic variation seeded by domain name.
-  - Choose **One shared variation** to generate one variation and publish it to all selected target sites.
+### 2. Sidebar Manager Plugin Setup
+1. In PBN Commander Dashboard, open the **WP Plugins Client** tab.
+2. Click **Download Sidebar Manager ZIP** (`pbn-commander-sidebar-manager.zip`).
+3. In child WordPress admin panel, go to **Plugins &rarr; Add New &rarr; Upload Plugin**, upload `pbn-commander-sidebar-manager.zip`, and click **Activate Plugin**.
+4. Click on **PBN Sidebar Link** in your WordPress sidebar and paste the same **Site API Key**. Click **Save Credentials**.
+5. Go to **Appearance &rarr; Widgets** (or **Appearance &rarr; Editor** for block themes) and add the **PBN Commander Sidebar Link** widget to your active sidebar or footer area.
+6. In PBN Commander Dashboard, click **Ping Sidebar Manager** to verify connectivity.
 
 ---
 
-## Supported Bulk Import CSV/TSV Format
+## Exporting Backlink Completion Reports
 
-The Bulk Import modal supports both CSV (comma-separated) and TSV (tab-separated) files as well as plain single-column domain lists.
-
-### CSV / TSV Column Headers
-```csv
-domain,client_url,keyword,label,notes
-pbndomain1.com,https://clientsite.com/page,Best SEO Services,Batch 1,Main client blog
-pbndomain2.org,client2.org,Backlink Strategy,Batch 1,Secondary blog
-```
-
-- `domain` *(Required)*: The URL or hostname of the child WordPress website.
-- `client_url` *(Optional)*: The target client landing page URL. Validated as HTTP/HTTPS.
-- `keyword` *(Optional)*: Plain text target anchor keyword.
-- `label` *(Optional)*: Categorization tag.
-- `notes` *(Optional)*: Internal reference note.
+1. Navigate to the **Sidebar Links** tab in the PBN Commander Dashboard.
+2. Fill out the campaign parameters, select target domains, and click **Deploy Links to Ordered Domains**.
+3. Upon completion, PBN Commander automatically records the per-site results reported by the Sidebar Manager plugins and generates an Excel/Google Sheets-compatible CSV report.
+4. In the **Backlink Campaign Completion Reports (CSV)** table, click **Download CSV** to download the report file formatted as `<campaign_slug>_report_<YYYY-MM-DD>.csv`.
 
 ---
 
@@ -79,13 +80,6 @@ pbndomain2.org,client2.org,Backlink Strategy,Batch 1,Secondary blog
    ```bash
    cp .env.example .env
    ```
-   *Edit `.env` if necessary:*
-   ```env
-   PORT=3000
-   NODE_ENV=development
-   JWT_SECRET=super-secret-pbn-commander-jwt-key
-   DB_PATH=./pbn_commander.db
-   ```
 
 3. **Start the Application:**
    ```bash
@@ -95,24 +89,12 @@ pbndomain2.org,client2.org,Backlink Strategy,Batch 1,Secondary blog
 
 ---
 
-## WordPress Child Website Integration Guide
-
-1. Log in to your PBN Commander Dashboard (`http://localhost:3000`).
-2. Navigate to the **WP Plugin Client** tab in the sidebar and click **Download Plugin ZIP** (`pbn-commander-client.zip`).
-3. Log in to your child WordPress admin panel (`https://yourchildsite.com/wp-admin`).
-4. Go to **Plugins &rarr; Add New &rarr; Upload Plugin**, upload `pbn-commander-client.zip`, and click **Activate Plugin**.
-5. In your WordPress sidebar, click on **PBN Commander**.
-6. In the PBN Commander Dashboard, register the website domain in the **Domains & Sites** section, click **Key** to copy the generated **Site API Key**, and paste it into the plugin settings page on WordPress. Click **Save Credentials**.
-7. In the PBN Commander Dashboard, click **Ping** or **Ping All Sites** to confirm authorization status.
-
----
-
 ## Automated Test Suite
 
 Run unit, integration, and UI verification tests:
 
 ```bash
-# Run all 50 backend unit, integration, and mocked WordPress connectivity tests
+# Run all 54 backend unit, integration, and mocked WordPress connectivity tests
 npm test
 
 # Run Playwright E2E visual UI screenshot/video tests

@@ -45,7 +45,7 @@
             <a href="#activity"><i class="fa-solid fa-clock-rotate-left"></i> <span>Activity Logs</span></a>
           </li>
           <li class="nav-item" data-tab="plugin">
-            <a href="#plugin"><i class="fa-brands fa-wordpress"></i> <span>WP Plugin Client</span></a>
+            <a href="#plugin"><i class="fa-brands fa-wordpress"></i> <span>WP Plugins Client</span></a>
           </li>
           <li class="nav-item" data-tab="settings">
             <a href="#settings"><i class="fa-solid fa-sliders"></i> <span>Settings</span></a>
@@ -140,9 +140,14 @@
             <div class="card">
               <div class="card-header">
                 <h3><i class="fa-solid fa-signal"></i> Network Health Overview</h3>
-                <button class="btn btn-sm btn-secondary" id="btnPingAllSites">
-                  <i class="fa-solid fa-rotate"></i> Ping All Sites
-                </button>
+                <div class="button-group">
+                  <button class="btn btn-sm btn-secondary" id="btnPingAllPostManager">
+                    <i class="fa-solid fa-rotate"></i> Ping Post Managers
+                  </button>
+                  <button class="btn btn-sm btn-secondary" id="btnPingAllSidebarManager">
+                    <i class="fa-solid fa-rotate"></i> Ping Sidebar Managers
+                  </button>
+                </div>
               </div>
               <div class="card-body">
                 <div class="network-health-summary">
@@ -223,12 +228,11 @@
                   <tr>
                     <th width="40"><input type="checkbox" id="selectAllDomains"></th>
                     <th>PBN Domain</th>
-                    <th>Client URL</th>
+                    <th>Post Manager Plugin</th>
+                    <th>Sidebar Manager Plugin</th>
                     <th>Target Keyword</th>
-                    <th>Status</th>
                     <th>Labels</th>
-                    <th>Last Connection Check</th>
-                    <th width="160">Actions</th>
+                    <th width="180">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="domainsTableBody">
@@ -516,6 +520,33 @@
             </div>
           </div>
 
+          <!-- Campaign Reports & Active Links -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-file-csv"></i> Backlink Campaign Completion Reports (CSV)</h3>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="data-table" id="campaignReportsTable">
+                  <thead>
+                    <tr>
+                      <th>Report ID</th>
+                      <th>Campaign Name</th>
+                      <th>Total Sites</th>
+                      <th>Success</th>
+                      <th>Failed</th>
+                      <th>Completion Date</th>
+                      <th>Export</th>
+                    </tr>
+                  </thead>
+                  <tbody id="campaignReportsTableBody">
+                    <!-- Rendered via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <div class="card mt-4">
             <div class="card-header">
               <h3><i class="fa-solid fa-list-ul"></i> Active Deployed Sidebar Links</h3>
@@ -606,31 +637,52 @@
 
         <!-- 7. WP PLUGIN CLIENT DOWNLOAD -->
         <section class="tab-pane" id="pane-plugin">
-          <div class="card">
-            <div class="card-header">
-              <h3><i class="fa-brands fa-wordpress"></i> PBN Commander Client WordPress Plugin</h3>
-            </div>
-            <div class="card-body">
-              <div class="plugin-download-banner">
-                <div class="plugin-info">
-                  <h2>Download & Install Official Client Plugin</h2>
-                  <p>Install this plugin on each child WordPress website to enable secure encrypted HMAC communication, automated article publishing, and sidebar link widget control.</p>
-                </div>
-                <a href="/api/plugin/download" class="btn btn-success btn-lg" download>
-                  <i class="fa-solid fa-download"></i> Download Plugin ZIP
-                </a>
+          <div class="grid-2-col">
+            <!-- Plugin 1: Post Manager -->
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-file-pen"></i> 1. PBN Commander Post Manager Plugin</h3>
               </div>
+              <div class="card-body">
+                <p style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:16px;">
+                  Install on child WordPress websites to enable remote article publishing, HTML post content rendering, categories, tags, featured images, and canonical URLs.
+                </p>
+                <a href="/api/plugin/download/post-manager" class="btn btn-success btn-block" download>
+                  <i class="fa-solid fa-download"></i> Download Post Manager ZIP
+                </a>
 
-              <div class="setup-guide-steps mt-4">
-                <h3>Installation Steps:</h3>
-                <ol class="step-list">
-                  <li>Download the <code>pbn-commander-client.zip</code> file using the button above.</li>
-                  <li>Log in to your WordPress admin dashboard (e.g. <code>https://yourchildsite.com/wp-admin</code>).</li>
-                  <li>Go to <strong>Plugins &rarr; Add New &rarr; Upload Plugin</strong> and upload the ZIP file.</li>
-                  <li>Activate the <strong>PBN Commander Client</strong> plugin.</li>
-                  <li>Navigate to <strong>PBN Commander</strong> in your WordPress sidebar.</li>
-                  <li>Copy the unique <strong>Site API Key</strong> generated for your domain from this dashboard and paste it into the plugin settings page.</li>
-                </ol>
+                <div class="setup-guide-steps mt-3" style="font-size:0.8rem;">
+                  <strong>Installation Steps:</strong>
+                  <ol style="margin-left:18px; margin-top:4px;">
+                    <li>Upload <code>pbn-commander-post-manager.zip</code> to WordPress Plugins &rarr; Add New.</li>
+                    <li>Activate plugin and open <strong>PBN Post Manager</strong> in WP sidebar.</li>
+                    <li>Paste Site API Key and Save.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plugin 2: Sidebar Manager -->
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-link"></i> 2. PBN Commander Sidebar Manager Plugin</h3>
+              </div>
+              <div class="card-body">
+                <p style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:16px;">
+                  Install on child WordPress websites to manage sidebar links, anchor text, rel attributes, and widget link deployments.
+                </p>
+                <a href="/api/plugin/download/sidebar-manager" class="btn btn-success btn-block" download>
+                  <i class="fa-solid fa-download"></i> Download Sidebar Manager ZIP
+                </a>
+
+                <div class="setup-guide-steps mt-3" style="font-size:0.8rem;">
+                  <strong>Installation Steps:</strong>
+                  <ol style="margin-left:18px; margin-top:4px;">
+                    <li>Upload <code>pbn-commander-sidebar-manager.zip</code> to WordPress Plugins &rarr; Add New.</li>
+                    <li>Activate plugin and open <strong>PBN Sidebar Link</strong> in WP sidebar.</li>
+                    <li>Paste Site API Key and add the <strong>PBN Commander Sidebar Link</strong> widget in Appearance &rarr; Widgets.</li>
+                  </ol>
+                </div>
               </div>
             </div>
           </div>

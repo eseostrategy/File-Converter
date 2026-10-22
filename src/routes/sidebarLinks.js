@@ -4,6 +4,18 @@ const { getDb } = require('../db');
 const { sendWpRequest } = require('../utils/wpClient');
 const { parseSideBySideInput } = require('../utils/backlinkMatcher');
 
+/**
+ * Escapes values safely for CSV output (RFC 4180 format)
+ */
+function escapeCsvCell(val) {
+  if (val === null || val === undefined) return '""';
+  const str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return `"${str}"`;
+}
+
 // GET /api/sidebar-links — List active sidebar link configurations
 router.get('/', (req, res) => {
   const db = getDb();
@@ -17,6 +29,43 @@ router.get('/', (req, res) => {
   db.all(sql, (err, rows) => {
     if (err) return res.status(500).json({ error: 'Failed to fetch sidebar links' });
     res.json(rows);
+  });
+});
+
+// GET /api/sidebar-links/reports — List all downloadable campaign completion reports
+router.get('/reports', (req, res) => {
+  const db = getDb();
+  const sql = `
+    SELECT scr.id, scr.link_id, scr.campaign_name, scr.total_targets, scr.success_count, scr.failed_count, scr.completed_at
+    FROM sidebar_campaign_reports scr
+    ORDER BY scr.completed_at DESC
+  `;
+  db.all(sql, (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch campaign reports' });
+    res.json(rows);
+  });
+});
+
+// GET /api/sidebar-links/reports/:id/download — Download CSV completion report
+router.get('/reports/:id/download', (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+
+  db.get(`SELECT * FROM sidebar_campaign_reports WHERE id = ?`, [id], (err, report) => {
+    if (err || !report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const campaignSlug = (report.campaign_name || 'Sidebar_Backlink_Campaign')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '');
+    const timestampStr = new Date(report.completed_at).toISOString().split('T')[0];
+    const filename = `${campaignSlug}_report_${timestampStr}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(report.report_csv);
   });
 });
 
@@ -55,10 +104,10 @@ router.post('/preview', (req, res) => {
     const domainMap = new Map(domains.map(d => [d.id, d]));
     const orderedDomains = domain_ids.map(id => domainMap.get(id)).filter(Boolean);
 
-    const disconnected = orderedDomains.filter(d => d.status !== 'connected');
+    const disconnected = orderedDomains.filter(d => d.sidebar_manager_status !== 'connected' && d.status !== 'connected');
     if (disconnected.length > 0) {
       return res.status(400).json({
-        error: `Domain ${disconnected[0].domain} is not connected. All target domains must be connected before deploying sidebar links.`,
+        error: `Domain ${disconnected[0].domain} is not connected for Sidebar Manager. All target domains must be connected before deploying sidebar links.`,
         disconnected: disconnected.map(d => d.domain)
       });
     }
@@ -90,7 +139,7 @@ router.post('/preview', (req, res) => {
   });
 });
 
-// POST /api/sidebar-links/deploy — Create & Deploy Sidebar Link via real WP API in exact domain order
+// POST /api/sidebar-links/deploy — Deploy Sidebar Links via Sidebar Manager plugin & generate CSV report
 router.post('/deploy', async (req, res) => {
   const {
     campaign_name,
@@ -123,10 +172,10 @@ router.post('/deploy', async (req, res) => {
       return res.status(400).json({ error: 'One or more target domains could not be found' });
     }
 
-    const disconnected = orderedDomains.filter(d => d.status !== 'connected');
+    const disconnected = orderedDomains.filter(d => d.sidebar_manager_status !== 'connected' && d.status !== 'connected');
     if (disconnected.length > 0) {
       return res.status(400).json({
-        error: `Cannot deploy: Domain "${disconnected[0].domain}" is not connected. All selected target domains must be connected.`
+        error: `Cannot deploy: Domain "${disconnected[0].domain}" is not connected for Sidebar Manager. All selected target domains must be connected.`
       });
     }
 
@@ -169,7 +218,8 @@ router.post('/deploy', async (req, res) => {
             widget_title: widget_title || 'Sponsored Links'
           };
 
-          const wpRes = await sendWpRequest(domain.domain, '/sidebar-links', payload, domain.site_key);
+          // Route specifically to Sidebar Manager plugin REST endpoint
+          const wpRes = await sendWpRequest(domain.domain, '/sidebar-links', payload, domain.site_key, 'pbn-commander-sidebar/v1');
 
           if (wpRes.success && wpRes.data && wpRes.data.success) {
             db.run(
@@ -183,7 +233,8 @@ router.post('/deploy', async (req, res) => {
               domain: domain.domain,
               client_url: pair.url,
               client_keyword: pair.keyword,
-              status: 'deployed'
+              status: 'deployed',
+              error: ''
             });
           } else {
             const errorMsg = wpRes.error || (wpRes.data && wpRes.data.message) || 'Deployment failed';
@@ -208,16 +259,45 @@ router.post('/deploy', async (req, res) => {
         const successCount = deploymentResults.filter(r => r.status === 'deployed').length;
         const failedCount = deploymentResults.filter(r => r.status === 'failed').length;
 
-        db.run(
-          `INSERT INTO activity_logs (action, status, details) VALUES (?, ?, ?)`,
-          ['deploy_sidebar_link', failedCount > 0 ? 'warning' : 'success', `Deployed sidebar links to ${successCount} site(s). Failed on ${failedCount} site(s).`]
-        );
+        // Build CSV Report
+        const completionTime = new Date().toISOString();
+        const csvHeaders = ['Order', 'Target Domain', 'Client URL', 'Client Keyword', 'Deployment Status', 'Error Details', 'Completion Time'];
+        const csvRows = [csvHeaders.map(escapeCsvCell).join(',')];
 
-        res.json({
-          success: true,
-          linkId,
-          deploymentResults
+        deploymentResults.forEach(r => {
+          const row = [
+            r.order,
+            r.domain,
+            r.client_url,
+            r.client_keyword,
+            r.status,
+            r.error || 'N/A',
+            completionTime
+          ];
+          csvRows.push(row.map(escapeCsvCell).join(','));
         });
+
+        const reportCsv = csvRows.join('\r\n');
+
+        db.run(
+          `INSERT INTO sidebar_campaign_reports (link_id, campaign_name, total_targets, success_count, failed_count, report_csv) VALUES (?, ?, ?, ?, ?, ?)`,
+          [linkId, campaign_name || 'Sidebar Backlink Campaign', deploymentResults.length, successCount, failedCount, reportCsv],
+          function (reportErr) {
+            const reportId = this ? this.lastID : null;
+
+            db.run(
+              `INSERT INTO activity_logs (action, status, details) VALUES (?, ?, ?)`,
+              ['deploy_sidebar_link', failedCount > 0 ? 'warning' : 'success', `Deployed sidebar links to ${successCount} site(s). Failed on ${failedCount} site(s). Report generated.`]
+            );
+
+            res.json({
+              success: true,
+              linkId,
+              reportId,
+              deploymentResults
+            });
+          }
+        );
       }
     );
   });

@@ -6,17 +6,17 @@ const { isSafeUrl } = require('../utils/ssrf');
 const { sendWpRequest } = require('../utils/wpClient');
 const { parseDelimitedText, validateClientUrl, normalizeClientUrl } = require('../utils/csvParser');
 
-// GET /api/domains — List with search & filter (Includes client_url and keyword, omits site_key)
+// GET /api/domains — List with search & filter (Includes client_url, keyword, and dual plugin status columns, omits site_key)
 router.get('/', (req, res) => {
   const db = getDb();
   const { search, status } = req.query;
 
-  let sql = `SELECT id, domain, status, label, notes, client_url, keyword, last_check, last_sync, last_error, created_at FROM domains WHERE 1=1`;
+  let sql = `SELECT id, domain, status, post_manager_status, sidebar_manager_status, post_manager_last_check, sidebar_manager_last_check, post_manager_error, sidebar_manager_error, label, notes, client_url, keyword, last_check, last_sync, last_error, created_at FROM domains WHERE 1=1`;
   const params = [];
 
   if (status && status !== 'all') {
-    sql += ` AND status = ?`;
-    params.push(status);
+    sql += ` AND (status = ? OR post_manager_status = ? OR sidebar_manager_status = ?)`;
+    params.push(status, status, status);
   }
 
   if (search) {
@@ -145,7 +145,7 @@ router.post('/bulk', (req, res) => {
 
   db.serialize(() => {
     const stmt = db.prepare(
-      `INSERT OR IGNORE INTO domains (domain, site_key, label, notes, client_url, keyword, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')`
+      `INSERT OR IGNORE INTO domains (domain, site_key, label, notes, client_url, keyword, status, post_manager_status, sidebar_manager_status) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending', 'pending')`
     );
 
     targetRows.forEach((row) => {
@@ -298,7 +298,7 @@ router.post('/', (req, res) => {
   const siteKey = generateSiteKey();
 
   db.run(
-    `INSERT INTO domains (domain, site_key, label, notes, client_url, keyword, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+    `INSERT INTO domains (domain, site_key, label, notes, client_url, keyword, status, post_manager_status, sidebar_manager_status) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending', 'pending')`,
     [normalized, siteKey, label || null, notes || null, normClientUrl, keyword || null],
     function (err) {
       if (err) {
@@ -320,7 +320,9 @@ router.post('/', (req, res) => {
         site_key: siteKey,
         client_url: normClientUrl,
         keyword: keyword || null,
-        status: 'pending'
+        status: 'pending',
+        post_manager_status: 'pending',
+        sidebar_manager_status: 'pending'
       });
     }
   );

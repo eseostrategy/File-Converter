@@ -3,7 +3,7 @@ const { isSafeUrl } = require('./ssrf');
 
 const DEFAULT_TIMEOUT_MS = 10000; // 10s default timeout
 
-async function sendWpRequest(domainUrl, endpointPath, payload, siteKey, options = {}) {
+async function sendWpRequest(domainUrl, endpointPath, payload, siteKey, restNamespace = 'pbn-commander/v1', options = {}) {
   const timeoutMs = options.timeout || DEFAULT_TIMEOUT_MS;
 
   if (!domainUrl || !siteKey) {
@@ -16,7 +16,7 @@ async function sendWpRequest(domainUrl, endpointPath, payload, siteKey, options 
     return { success: false, error: 'Blocked attempt to send HTTP request to private/internal network address' };
   }
 
-  const fullUrl = `${normalizedBase}/wp-json/pbn-commander/v1${endpointPath}`;
+  const fullUrl = `${normalizedBase}/wp-json/${restNamespace}${endpointPath}`;
   const bodyString = typeof payload === 'object' ? JSON.stringify(payload) : (payload || '');
   const headers = generateHmacHeaders(payload, siteKey);
 

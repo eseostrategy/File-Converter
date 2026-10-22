@@ -20,6 +20,7 @@ const state = {
   articles: [],
   publishingHistory: [],
   sidebarLinks: [],
+  campaignReports: [],
   tasks: [],
   logs: []
 };
@@ -64,7 +65,7 @@ function initNavigation() {
 
       if (targetTab === 'domains') loadDomains();
       if (targetTab === 'articles') loadPublishingHistory();
-      if (targetTab === 'sidebar-links') loadSidebarLinks();
+      if (targetTab === 'sidebar-links') { loadSidebarLinks(); loadCampaignReports(); }
       if (targetTab === 'activity') loadActivityLogs();
       if (targetTab === 'tasks') loadTasks();
 
@@ -139,7 +140,7 @@ function initEventHandlers() {
   if (selectAllTargetSites) {
     selectAllTargetSites.addEventListener('change', (e) => {
       const checked = e.target.checked;
-      const connected = state.domains.filter(d => d.status === 'connected').map(d => d.id);
+      const connected = state.domains.filter(d => d.status === 'connected' || d.post_manager_status === 'connected').map(d => d.id);
       if (checked) {
         state.orderedDomainIds = Array.from(new Set([...state.orderedDomainIds, ...connected]));
       } else {
@@ -154,13 +155,46 @@ function initEventHandlers() {
   if (selectAllSidebarTargetSites) {
     selectAllSidebarTargetSites.addEventListener('change', (e) => {
       const checked = e.target.checked;
-      const connected = state.domains.filter(d => d.status === 'connected').map(d => d.id);
+      const connected = state.domains.filter(d => d.status === 'connected' || d.sidebar_manager_status === 'connected').map(d => d.id);
       if (checked) {
         state.sidebarOrderedDomainIds = Array.from(new Set([...state.sidebarOrderedDomainIds, ...connected]));
       } else {
         state.sidebarOrderedDomainIds = [];
       }
       renderSidebarOrderedDomainList();
+    });
+  }
+
+  // Dual Ping Batch Buttons
+  const btnPingAllPostManager = document.getElementById('btnPingAllPostManager');
+  if (btnPingAllPostManager) {
+    btnPingAllPostManager.addEventListener('click', async () => {
+      showToast('Pinging Post Manager plugin across all domains...', 'info');
+      try {
+        const res = await fetch('/api/connection/ping-all-post-manager', { method: 'POST' });
+        if (res.ok) {
+          showToast('Post Manager ping completed', 'success');
+          loadDomains();
+        }
+      } catch (err) {
+        showToast('Error during Post Manager ping', 'danger');
+      }
+    });
+  }
+
+  const btnPingAllSidebarManager = document.getElementById('btnPingAllSidebarManager');
+  if (btnPingAllSidebarManager) {
+    btnPingAllSidebarManager.addEventListener('click', async () => {
+      showToast('Pinging Sidebar Manager plugin across all domains...', 'info');
+      try {
+        const res = await fetch('/api/connection/ping-all-sidebar-manager', { method: 'POST' });
+        if (res.ok) {
+          showToast('Sidebar Manager ping completed', 'success');
+          loadDomains();
+        }
+      } catch (err) {
+        showToast('Error during Sidebar Manager ping', 'danger');
+      }
     });
   }
 
@@ -226,13 +260,11 @@ function initEventHandlers() {
         });
         const data = await res.json();
         if (res.ok) {
-          // Set state.orderedDomainIds to match exact user order
           const matchedIds = data.matchedConnected.map(d => d.id);
           state.orderedDomainIds = matchedIds;
 
           renderOrderedDomainList();
 
-          // Render Status Badges
           const reportBox = document.getElementById('manualMatchStatusReport');
           reportBox.classList.remove('hidden');
           reportBox.innerHTML = `
@@ -242,8 +274,6 @@ function initEventHandlers() {
               ${data.unknown.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-question"></i> Unknown: ${data.unknown.length}</span>` : ''}
               ${data.invalid.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Invalid: ${data.invalid.length}</span>` : ''}
             </div>
-            ${data.matchedDisconnected.length > 0 ? `<div style="color:var(--warning); margin-top:4px;">Disconnected domains cannot be published to until plugin ping succeeds.</div>` : ''}
-            ${data.unknown.length > 0 ? `<div style="color:var(--danger); margin-top:2px;">Unknown domains: ${escapeHtml(data.unknown.join(', '))}</div>` : ''}
           `;
 
           showToast(`Resolved ${matchedIds.length} connected domain(s) in order!`, 'success');
@@ -434,7 +464,7 @@ function initEventHandlers() {
         return;
       }
 
-      showToast('Publishing article to selected ordered domains...', 'info');
+      showToast('Publishing article via Post Manager plugin...', 'info');
 
       try {
         const res = await fetch('/api/articles/publish', {
@@ -503,7 +533,7 @@ function initEventHandlers() {
         return;
       }
 
-      showToast('Deploying sidebar link configuration...', 'info');
+      showToast('Deploying sidebar links via Sidebar Manager plugin...', 'info');
 
       try {
         const res = await fetch('/api/sidebar-links/deploy', {
@@ -523,21 +553,16 @@ function initEventHandlers() {
 
         const data = await res.json();
         if (res.ok) {
-          const successCount = data.deploymentResults.filter(r => r.status === 'deployed').length;
+          const successCount = data.deploymentResults.filter(r => r.status === 'successful').length;
           const failCount = data.deploymentResults.filter(r => r.status === 'failed').length;
 
-          if (successCount === 0) {
-            showToast(`Sidebar link deployment failed on all ${failCount} site(s)`, 'danger');
-          } else if (failCount > 0) {
-            showToast(`Sidebar link deployed to ${successCount} site(s). ${failCount} site(s) failed.`, 'warning');
-          } else {
-            showToast(`Sidebar link deployed to ${successCount} site(s)!`, 'success');
-          }
+          showToast(`Deployed sidebar links! Success: ${successCount}, Failed: ${failCount}. Report generated.`, successCount > 0 ? 'success' : 'danger');
 
           sidebarLinkForm.reset();
           state.sidebarOrderedDomainIds = [];
           renderSidebarOrderedDomainList();
           loadSidebarLinks();
+          loadCampaignReports();
           loadActivityLogs();
         } else {
           showToast(data.error || 'Failed to deploy sidebar link', 'danger');
@@ -547,20 +572,13 @@ function initEventHandlers() {
       }
     });
   }
-
-  const btnPingAllSites = document.getElementById('btnPingAllSites');
-  if (btnPingAllSites) {
-    btnPingAllSites.addEventListener('click', () => {
-      showToast('Initiated batch connection check across all websites...', 'info');
-      triggerBatchConnectionCheck();
-    });
-  }
 }
 
 async function loadInitialData() {
   await loadDomains();
   await loadPublishingHistory();
   await loadSidebarLinks();
+  await loadCampaignReports();
   await loadActivityLogs();
   await loadTasks();
 }
@@ -611,6 +629,18 @@ async function loadSidebarLinks() {
   }
 }
 
+async function loadCampaignReports() {
+  try {
+    const res = await fetch('/api/sidebar-links/reports');
+    if (res.ok) {
+      state.campaignReports = await res.json();
+      renderCampaignReportsTable();
+    }
+  } catch (err) {
+    console.error('Failed to load campaign reports', err);
+  }
+}
+
 async function loadActivityLogs() {
   try {
     const res = await fetch('/api/activity');
@@ -641,7 +671,7 @@ function renderOrderedDomainList() {
   const badgeCount = document.getElementById('connectedSiteCountBadge');
 
   if (badgeCount) {
-    const connected = state.domains.filter(d => d.status === 'connected').length;
+    const connected = state.domains.filter(d => d.status === 'connected' || d.post_manager_status === 'connected').length;
     badgeCount.textContent = connected;
   }
 
@@ -652,8 +682,7 @@ function renderOrderedDomainList() {
     return;
   }
 
-  // Render list of connected domains with ordering controls
-  const connectedDomains = state.domains.filter(d => d.status === 'connected');
+  const connectedDomains = state.domains.filter(d => d.status === 'connected' || d.post_manager_status === 'connected');
 
   container.innerHTML = connectedDomains.map(d => {
     const isSelected = state.orderedDomainIds.includes(d.id);
@@ -713,7 +742,7 @@ function renderSidebarOrderedDomainList() {
     return;
   }
 
-  const connectedDomains = state.domains.filter(d => d.status === 'connected');
+  const connectedDomains = state.domains.filter(d => d.status === 'connected' || d.sidebar_manager_status === 'connected');
 
   container.innerHTML = connectedDomains.map(d => {
     const isSelected = state.sidebarOrderedDomainIds.includes(d.id);
@@ -858,7 +887,7 @@ function renderDomainsTable() {
   if (!tbody) return;
 
   if (!state.domains.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center p-4">No domains registered yet. Click "Add Domain" or "Bulk Import" to get started.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4">No domains registered yet. Click "Add Domain" or "Bulk Import" to get started.</td></tr>`;
     return;
   }
 
@@ -870,28 +899,63 @@ function renderDomainsTable() {
       <td>
         <strong>${escapeHtml(d.domain)}</strong>
         ${d.notes ? `<div class="text-muted" style="font-size:0.75rem;">${escapeHtml(d.notes)}</div>` : ''}
-        ${d.last_error ? `<div style="color:var(--danger); font-size:0.75rem;"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(d.last_error)}</div>` : ''}
       </td>
       <td>
-        ${d.client_url ? `<a href="${escapeHtml(d.client_url)}" target="_blank" style="color:var(--primary); font-weight:500;">${escapeHtml(d.client_url)}</a>` : '-'}
+        <span class="badge ${d.post_manager_status === 'connected' ? 'badge-success' : d.post_manager_status === 'disconnected' ? 'badge-danger' : 'badge-warning'}">
+          ${d.post_manager_status || 'pending'}
+        </span>
+        <button class="btn-icon" onclick="pingPostManager(${d.id})" title="Ping Post Manager"><i class="fa-solid fa-plug"></i></button>
+      </td>
+      <td>
+        <span class="badge ${d.sidebar_manager_status === 'connected' ? 'badge-success' : d.sidebar_manager_status === 'disconnected' ? 'badge-danger' : 'badge-warning'}">
+          ${d.sidebar_manager_status || 'pending'}
+        </span>
+        <button class="btn-icon" onclick="pingSidebarManager(${d.id})" title="Ping Sidebar Manager"><i class="fa-solid fa-plug"></i></button>
       </td>
       <td>${escapeHtml(d.keyword || '-')}</td>
-      <td>
-        <span class="badge ${d.status === 'connected' ? 'badge-success' : d.status === 'disconnected' ? 'badge-danger' : 'badge-warning'}">
-          ${d.status || 'pending'}
-        </span>
-      </td>
       <td>${escapeHtml(d.label || '-')}</td>
-      <td>${d.last_check ? new Date(d.last_check).toLocaleString() : 'Never'}</td>
       <td>
         <button class="btn btn-sm btn-secondary" onclick="editDomainModal(${d.id})"><i class="fa-solid fa-pen"></i></button>
         <button class="btn btn-sm btn-secondary" onclick="viewSiteKey(${d.id})"><i class="fa-solid fa-key"></i> Key</button>
-        <button class="btn btn-sm btn-outline" onclick="pingSingleSite(${d.id})"><i class="fa-solid fa-plug"></i></button>
         <button class="btn btn-sm btn-danger" onclick="deleteSingleDomain(${d.id})"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>
   `).join('');
 }
+
+window.pingPostManager = async (id) => {
+  showToast('Testing Post Manager connection...', 'info');
+  try {
+    const res = await fetch(`/api/connection/${id}/ping-post-manager`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Post Manager plugin connected!', 'success');
+    } else {
+      showToast(`Post Manager connection failed: ${data.error || 'Check plugin'}`, 'danger');
+    }
+    loadDomains();
+    loadActivityLogs();
+  } catch (err) {
+    showToast('Network error pinging Post Manager', 'danger');
+  }
+};
+
+window.pingSidebarManager = async (id) => {
+  showToast('Testing Sidebar Manager connection...', 'info');
+  try {
+    const res = await fetch(`/api/connection/${id}/ping-sidebar-manager`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Sidebar Manager plugin connected!', 'success');
+    } else {
+      showToast(`Sidebar Manager connection failed: ${data.error || 'Check plugin'}`, 'danger');
+    }
+    loadDomains();
+    loadActivityLogs();
+  } catch (err) {
+    showToast('Network error pinging Sidebar Manager', 'danger');
+  }
+};
 
 window.editDomainModal = (id) => {
   const domain = state.domains.find(d => d.id === id);
@@ -991,6 +1055,32 @@ function renderSidebarLinksTable() {
   `).join('');
 }
 
+function renderCampaignReportsTable() {
+  const tbody = document.getElementById('campaignReportsTableBody');
+  if (!tbody) return;
+
+  if (!state.campaignReports.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4">No campaign reports generated yet. Deploy a sidebar link to create a report.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = state.campaignReports.map(r => `
+    <tr>
+      <td>#${r.id}</td>
+      <td><strong>${escapeHtml(r.campaign_name)}</strong></td>
+      <td>${r.total_targets}</td>
+      <td><span class="badge badge-success">${r.success_count}</span></td>
+      <td><span class="badge ${r.failed_count > 0 ? 'badge-danger' : 'badge-info'}">${r.failed_count}</span></td>
+      <td>${new Date(r.completed_at).toLocaleString()}</td>
+      <td>
+        <a href="/api/sidebar-links/reports/${r.id}/download" class="btn btn-sm btn-success" download>
+          <i class="fa-solid fa-file-csv"></i> Download CSV
+        </a>
+      </td>
+    </tr>
+  `).join('');
+}
+
 window.deleteSidebarLink = async (id) => {
   if (!confirm('Are you sure you want to remove this sidebar link campaign?')) return;
   try {
@@ -1031,8 +1121,8 @@ function renderPublishingHistory() {
 
 function renderDashboardStats() {
   const total = state.domains.length;
-  const connected = state.domains.filter(d => d.status === 'connected').length;
-  const pending = state.domains.filter(d => d.status !== 'connected').length;
+  const connected = state.domains.filter(d => d.status === 'connected' || d.post_manager_status === 'connected').length;
+  const pending = state.domains.filter(d => d.status !== 'connected' && d.post_manager_status !== 'connected').length;
 
   document.getElementById('statTotalSites').textContent = total;
   document.getElementById('statConnectedSites').textContent = connected;
@@ -1080,44 +1170,6 @@ window.deleteSingleDomain = async (id) => {
     showToast('Error deleting website', 'danger');
   }
 };
-
-window.pingSingleSite = async (id) => {
-  showToast('Testing WordPress connection...', 'info');
-  try {
-    const res = await fetch(`/api/domains/${id}/ping`, { method: 'POST' });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      showToast('Connection verified successfully!', 'success');
-    } else {
-      showToast(`Connection failed: ${data.error || 'Check plugin installation'}`, 'danger');
-    }
-    loadDomains();
-    loadActivityLogs();
-  } catch (err) {
-    showToast('Network error during connection check', 'danger');
-  }
-};
-
-async function triggerBatchConnectionCheck() {
-  try {
-    const res = await fetch('/api/domains/ping-all', { method: 'POST' });
-    const data = await res.json();
-    if (res.ok) {
-      const connectedCount = data.results ? data.results.filter(r => r.status === 'connected').length : 0;
-      const failedCount = data.results ? data.results.filter(r => r.status === 'disconnected').length : 0;
-
-      if (failedCount > 0) {
-        showToast(`Ping check: ${connectedCount} connected, ${failedCount} failed`, 'warning');
-      } else {
-        showToast(`All ${connectedCount} website(s) connected!`, 'success');
-      }
-      loadDomains();
-      loadActivityLogs();
-    }
-  } catch (err) {
-    showToast('Failed to execute ping check', 'danger');
-  }
-}
 
 window.viewSiteKey = async (id) => {
   try {

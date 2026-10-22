@@ -38,20 +38,26 @@ async function initDb() {
         )
       `);
 
-      // 2. Domains Table
+      // 2. Domains Table (with independent plugin status columns)
       db.run(`
         CREATE TABLE IF NOT EXISTS domains (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           domain TEXT UNIQUE NOT NULL,
           site_key TEXT NOT NULL,
           status TEXT NOT NULL DEFAULT 'pending',
+          post_manager_status TEXT NOT NULL DEFAULT 'pending',
+          sidebar_manager_status TEXT NOT NULL DEFAULT 'pending',
           label TEXT,
           notes TEXT,
           client_url TEXT,
           keyword TEXT,
           last_check DATETIME,
+          post_manager_last_check DATETIME,
+          sidebar_manager_last_check DATETIME,
           last_sync DATETIME,
           last_error TEXT,
+          post_manager_error TEXT,
+          sidebar_manager_error TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
@@ -59,6 +65,12 @@ async function initDb() {
       let cols = await getTableColumns('domains');
       if (!cols.includes('client_url')) await runAsync(`ALTER TABLE domains ADD COLUMN client_url TEXT`);
       if (!cols.includes('keyword')) await runAsync(`ALTER TABLE domains ADD COLUMN keyword TEXT`);
+      if (!cols.includes('post_manager_status')) await runAsync(`ALTER TABLE domains ADD COLUMN post_manager_status TEXT DEFAULT 'pending'`);
+      if (!cols.includes('sidebar_manager_status')) await runAsync(`ALTER TABLE domains ADD COLUMN sidebar_manager_status TEXT DEFAULT 'pending'`);
+      if (!cols.includes('post_manager_last_check')) await runAsync(`ALTER TABLE domains ADD COLUMN post_manager_last_check DATETIME`);
+      if (!cols.includes('sidebar_manager_last_check')) await runAsync(`ALTER TABLE domains ADD COLUMN sidebar_manager_last_check DATETIME`);
+      if (!cols.includes('post_manager_error')) await runAsync(`ALTER TABLE domains ADD COLUMN post_manager_error TEXT`);
+      if (!cols.includes('sidebar_manager_error')) await runAsync(`ALTER TABLE domains ADD COLUMN sidebar_manager_error TEXT`);
 
       // 3. Articles Table
       db.run(`
@@ -146,7 +158,22 @@ async function initDb() {
       if (!cols.includes('assigned_url')) await runAsync(`ALTER TABLE sidebar_link_deployments ADD COLUMN assigned_url TEXT`);
       if (!cols.includes('assigned_keyword')) await runAsync(`ALTER TABLE sidebar_link_deployments ADD COLUMN assigned_keyword TEXT`);
 
-      // 7. Background Tasks Table
+      // 7. Sidebar Campaign Reports Table (for CSV export downloads)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS sidebar_campaign_reports (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          link_id INTEGER NOT NULL,
+          campaign_name TEXT,
+          total_targets INTEGER DEFAULT 0,
+          success_count INTEGER DEFAULT 0,
+          failed_count INTEGER DEFAULT 0,
+          report_csv TEXT NOT NULL,
+          completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (link_id) REFERENCES sidebar_links(id) ON DELETE CASCADE
+        )
+      `);
+
+      // 8. Background Tasks Table
       db.run(`
         CREATE TABLE IF NOT EXISTS tasks (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -161,7 +188,7 @@ async function initDb() {
         )
       `);
 
-      // 8. Activity Logs Table
+      // 9. Activity Logs Table
       db.run(`
         CREATE TABLE IF NOT EXISTS activity_logs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
