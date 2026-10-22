@@ -9,7 +9,7 @@
  */
 
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
 define('PBN_COMMANDER_VERSION', '1.0.0');
@@ -130,6 +130,19 @@ class PBNCommanderClient {
 
         if (empty($title) || empty($content)) {
             return new WP_Error('missing_data', 'Title and content are required', array('status' => 400));
+        }
+
+        // Process optional backlink insertion safely
+        if (!empty($params['backlink_url']) && !empty($params['backlink_keyword'])) {
+            $backlink_url = esc_url_raw($params['backlink_url']);
+            $backlink_keyword = sanitize_text_field($params['backlink_keyword']);
+
+            // Check scheme
+            $scheme = parse_url($backlink_url, PHP_URL_SCHEME);
+            if (in_array(strtolower($scheme), array('http', 'https')) && !empty($backlink_keyword)) {
+                $link_html = '<p class="pbn-commander-backlink"><a href="' . esc_url($backlink_url) . '" target="_blank">' . esc_html($backlink_keyword) . '</a></p>';
+                $content .= "\n\n" . wp_kses_post($link_html);
+            }
         }
 
         $post_data = array(

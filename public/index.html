@@ -255,7 +255,7 @@
 
                   <div class="form-group">
                     <label for="articleContent">Content (HTML / Plain Text) <span class="required">*</span></label>
-                    <textarea id="articleContent" class="form-textarea" rows="12" placeholder="Write or paste HTML content here..." required></textarea>
+                    <textarea id="articleContent" class="form-textarea" rows="10" placeholder="Write or paste HTML content here..." required></textarea>
                   </div>
 
                   <div class="grid-2-col">
@@ -280,7 +280,54 @@
                     </div>
                   </div>
 
-                  <div class="form-group">
+                  <!-- Backlink URLs & Keywords Panel -->
+                  <div class="card mt-3" style="background:var(--surface-hover); border-color:var(--border);">
+                    <div class="card-header" style="padding:12px 16px;">
+                      <h4 style="font-size:0.95rem;"><i class="fa-solid fa-link"></i> Backlink URLs & Keywords Config</h4>
+                    </div>
+                    <div class="card-body" style="padding:16px;">
+                      <div class="form-group mb-3">
+                        <label>Backlink Mode</label>
+                        <select id="backlinkModeSelect" class="form-select">
+                          <option value="none">No Backlink Insertion</option>
+                          <option value="single">Same URL & Keyword for All Selected Domains</option>
+                          <option value="bulk">Bulk URL & Keyword Pairs (1-to-1 Mapping)</option>
+                        </select>
+                      </div>
+
+                      <!-- Mode 1: Single Pair -->
+                      <div id="singleBacklinkBox" class="hidden">
+                        <div class="grid-2-col">
+                          <div class="form-group">
+                            <label for="singleBacklinkUrl">Target Client URL</label>
+                            <input type="text" id="singleBacklinkUrl" class="form-input" placeholder="https://client.com/landing">
+                          </div>
+                          <div class="form-group">
+                            <label for="singleBacklinkKeyword">Anchor Keyword</label>
+                            <input type="text" id="singleBacklinkKeyword" class="form-input" placeholder="e.g. Best SEO Services">
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Mode 2: Bulk Pairs -->
+                      <div id="bulkBacklinkBox" class="hidden">
+                        <div class="form-group mb-2">
+                          <label for="bulkBacklinkText">Bulk Pairs (Format: <code>https://client.com/page | Anchor Keyword</code>)</label>
+                          <textarea id="bulkBacklinkText" class="form-textarea" rows="5" placeholder="https://client1.com/page | Anchor Keyword 1&#10;https://client2.com/page | Anchor Keyword 2"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary" id="btnValidateBulkBacklinks">
+                          <i class="fa-solid fa-check"></i> Validate & Map Pairs
+                        </button>
+                      </div>
+
+                      <!-- Mapping Breakdown Summary -->
+                      <div id="backlinkMappingSummary" class="mt-3 hidden" style="font-size:0.85rem; padding:10px; background:var(--surface); border-radius:var(--radius); border:1px solid var(--border);">
+                        <!-- Rendered via JS -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group mt-3">
                     <label for="articlePostStatus">Post Status</label>
                     <select id="articlePostStatus" class="form-select">
                       <option value="publish">Publish Immediately</option>
@@ -288,28 +335,44 @@
                     </select>
                   </div>
 
-                  <div class="form-actions">
+                  <div class="form-actions mt-3">
                     <button type="button" class="btn btn-secondary" id="btnPreviewArticle">
                       <i class="fa-solid fa-eye"></i> Preview Article
                     </button>
                     <button type="submit" class="btn btn-primary" id="btnPublishArticle">
-                      <i class="fa-solid fa-paper-plane"></i> Publish to Selected Sites
+                      <i class="fa-solid fa-paper-plane"></i> Publish Article
                     </button>
                   </div>
                 </form>
               </div>
             </div>
 
+            <!-- Target Websites & Manual Paste Selector -->
             <div class="card">
               <div class="card-header">
-                <h3><i class="fa-solid fa-bullseye"></i> Target Websites</h3>
+                <h3><i class="fa-solid fa-bullseye"></i> Target Connected Websites</h3>
               </div>
               <div class="card-body">
-                <div class="target-sites-selector">
-                  <div class="target-selector-header">
-                    <label><input type="checkbox" id="selectAllTargetSites"> Select All Connected Sites</label>
+                <!-- Manual Domain Paste Box -->
+                <div class="manual-domain-match-box mb-4" style="padding:12px; background:var(--surface-hover); border-radius:var(--radius);">
+                  <label for="manualDomainPasteText" style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">
+                    <i class="fa-solid fa-paste"></i> Manual Domain Paste Box (One per line)
+                  </label>
+                  <textarea id="manualDomainPasteText" class="form-textarea mb-2" rows="3" placeholder="site1.com&#10;site2.org"></textarea>
+                  <button type="button" class="btn btn-sm btn-secondary" id="btnMatchPastedDomains">
+                    <i class="fa-solid fa-filter"></i> Match & Select Connected Domains
+                  </button>
+
+                  <div id="manualMatchStatusReport" class="mt-2 hidden" style="font-size:0.8rem;">
+                    <!-- Rendered via JS badges -->
                   </div>
-                  <div class="target-sites-list" id="targetSitesContainer">
+                </div>
+
+                <div class="target-sites-selector">
+                  <div class="target-selector-header" style="margin-bottom:10px;">
+                    <label style="font-weight:600; font-size:0.85rem;"><input type="checkbox" id="selectAllTargetSites"> Select All Connected Sites (<span id="connectedSiteCountBadge">0</span>)</label>
+                  </div>
+                  <div class="target-sites-list" id="targetSitesContainer" style="max-height:240px; overflow-y:auto;">
                     <p class="empty-msg">No connected websites available. Add and verify websites in Domains panel first.</p>
                   </div>
                 </div>

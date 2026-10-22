@@ -140,6 +140,7 @@ function initEventHandlers() {
       document.querySelectorAll('#targetSitesContainer .target-site-checkbox').forEach(cb => {
         cb.checked = checked;
       });
+      updateBacklinkMappingSummary();
     });
   }
 
@@ -153,39 +154,91 @@ function initEventHandlers() {
     });
   }
 
-  const btnRefreshActivity = document.getElementById('btnRefreshActivity');
-  if (btnRefreshActivity) {
-    btnRefreshActivity.addEventListener('click', () => {
-      loadActivityLogs();
-      showToast('Activity logs refreshed', 'info');
+  // Manual Domain Matching
+  const btnMatchPastedDomains = document.getElementById('btnMatchPastedDomains');
+  if (btnMatchPastedDomains) {
+    btnMatchPastedDomains.addEventListener('click', async () => {
+      const rawText = document.getElementById('manualDomainPasteText').value.trim();
+      if (!rawText) {
+        showToast('Please enter domains in the manual domain paste box', 'warning');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/articles/match-domains', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rawDomainsText: rawText })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Uncheck all target site checkboxes first
+          document.querySelectorAll('#targetSitesContainer .target-site-checkbox').forEach(cb => cb.checked = false);
+
+          // Check matched connected domain checkboxes
+          const matchedIds = new Set(data.matchedConnected.map(d => d.id));
+          document.querySelectorAll('#targetSitesContainer .target-site-checkbox').forEach(cb => {
+            if (matchedIds.has(parseInt(cb.value, 10))) {
+              cb.checked = true;
+            }
+          });
+
+          // Render Status Badges
+          const reportBox = document.getElementById('manualMatchStatusReport');
+          reportBox.classList.remove('hidden');
+          reportBox.innerHTML = `
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <span class="badge badge-success"><i class="fa-solid fa-check"></i> Matched Connected: ${data.matchedConnected.length}</span>
+              ${data.matchedDisconnected.length > 0 ? `<span class="badge badge-warning"><i class="fa-solid fa-plug"></i> Matched Disconnected: ${data.matchedDisconnected.length}</span>` : ''}
+              ${data.unknown.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-question"></i> Unknown Domains: ${data.unknown.length}</span>` : ''}
+              ${data.invalid.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Invalid Lines: ${data.invalid.length}</span>` : ''}
+            </div>
+            ${data.matchedDisconnected.length > 0 ? `<div style="color:var(--warning); margin-top:4px;">Disconnected domains cannot be published to until plugin ping succeeds.</div>` : ''}
+            ${data.unknown.length > 0 ? `<div style="color:var(--danger); margin-top:2px;">Unknown domains: ${escapeHtml(data.unknown.join(', '))}</div>` : ''}
+          `;
+
+          showToast(`Selected ${data.matchedConnected.length} connected domain(s)!`, 'success');
+          updateBacklinkMappingSummary();
+        } else {
+          showToast(data.error || 'Failed to match domains', 'danger');
+        }
+      } catch (err) {
+        showToast('Network error matching domains', 'danger');
+      }
     });
   }
 
-  const btnRefreshTasks = document.getElementById('btnRefreshTasks');
-  if (btnRefreshTasks) {
-    btnRefreshTasks.addEventListener('click', () => {
-      loadTasks();
-      showToast('Task queue refreshed', 'info');
+  // Backlink Mode Switcher
+  const backlinkModeSelect = document.getElementById('backlinkModeSelect');
+  if (backlinkModeSelect) {
+    backlinkModeSelect.addEventListener('change', (e) => {
+      const mode = e.target.value;
+      const singleBox = document.getElementById('singleBacklinkBox');
+      const bulkBox = document.getElementById('bulkBacklinkBox');
+
+      if (mode === 'single') {
+        singleBox.classList.remove('hidden');
+        bulkBox.classList.add('hidden');
+      } else if (mode === 'bulk') {
+        singleBox.classList.add('hidden');
+        bulkBox.classList.remove('hidden');
+      } else {
+        singleBox.classList.add('hidden');
+        bulkBox.classList.add('hidden');
+      }
+      updateBacklinkMappingSummary();
     });
   }
 
-  // Search & Filter Domains
-  const searchInput = document.getElementById('domainSearchInput');
-  const statusFilter = document.getElementById('domainStatusFilter');
-
-  if (searchInput) {
-    let debounceTimer;
-    searchInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => loadDomains(), 300);
+  // Validate Bulk Backlinks Button
+  const btnValidateBulkBacklinks = document.getElementById('btnValidateBulkBacklinks');
+  if (btnValidateBulkBacklinks) {
+    btnValidateBulkBacklinks.addEventListener('click', () => {
+      updateBacklinkMappingSummary();
     });
   }
 
-  if (statusFilter) {
-    statusFilter.addEventListener('change', () => loadDomains());
-  }
-
-  // Single Add Domain Form
+  // Single Domain Add & Edit
   const addDomainForm = document.getElementById('addDomainForm');
   if (addDomainForm) {
     addDomainForm.addEventListener('submit', async (e) => {
@@ -224,7 +277,6 @@ function initEventHandlers() {
     });
   }
 
-  // Single Edit Domain Form
   const editDomainForm = document.getElementById('editDomainForm');
   if (editDomainForm) {
     editDomainForm.addEventListener('submit', async (e) => {
@@ -343,13 +395,33 @@ function initEventHandlers() {
       const featured_image = document.getElementById('articleFeaturedImage').value.trim();
       const canonical_url = document.getElementById('articleCanonical').value.trim();
       const status = document.getElementById('articlePostStatus').value;
+      const backlink_mode = document.getElementById('backlinkModeSelect').value;
 
       const selectedSiteCbs = document.querySelectorAll('#targetSitesContainer .target-site-checkbox:checked');
       const domain_ids = Array.from(selectedSiteCbs).map(cb => parseInt(cb.value, 10));
 
       if (!domain_ids.length) {
-        showToast('Please select at least one target website', 'warning');
+        showToast('Please select at least one connected target website', 'warning');
         return;
+      }
+
+      let backlink_url = '';
+      let backlink_keyword = '';
+      let bulk_backlinks_text = '';
+
+      if (backlink_mode === 'single') {
+        backlink_url = document.getElementById('singleBacklinkUrl').value.trim();
+        backlink_keyword = document.getElementById('singleBacklinkKeyword').value.trim();
+        if (!backlink_url || !backlink_keyword) {
+          showToast('Please provide both backlink URL and anchor keyword', 'warning');
+          return;
+        }
+      } else if (backlink_mode === 'bulk') {
+        bulk_backlinks_text = document.getElementById('bulkBacklinkText').value.trim();
+        if (!bulk_backlinks_text) {
+          showToast('Please enter bulk URL and keyword pairs', 'warning');
+          return;
+        }
       }
 
       showToast('Publishing article to selected websites...', 'info');
@@ -366,7 +438,11 @@ function initEventHandlers() {
             featured_image,
             canonical_url,
             status,
-            domain_ids
+            domain_ids,
+            backlink_mode,
+            backlink_url,
+            backlink_keyword,
+            bulk_backlinks_text
           })
         });
 
@@ -375,7 +451,9 @@ function initEventHandlers() {
           const successCount = data.results.filter(r => r.status === 'published').length;
           const failCount = data.results.filter(r => r.status === 'failed').length;
 
-          if (failCount > 0) {
+          if (successCount === 0) {
+            showToast(`Publishing failed on all ${failCount} selected site(s)`, 'danger');
+          } else if (failCount > 0) {
             showToast(`Published to ${successCount} site(s). ${failCount} site(s) failed.`, 'warning');
           } else {
             showToast(`Published successfully to all ${successCount} site(s)!`, 'success');
@@ -435,7 +513,9 @@ function initEventHandlers() {
           const successCount = data.deploymentResults.filter(r => r.status === 'deployed').length;
           const failCount = data.deploymentResults.filter(r => r.status === 'failed').length;
 
-          if (failCount > 0) {
+          if (successCount === 0) {
+            showToast(`Sidebar link deployment failed on all ${failCount} site(s)`, 'danger');
+          } else if (failCount > 0) {
             showToast(`Sidebar link deployed to ${successCount} site(s). ${failCount} site(s) failed.`, 'warning');
           } else {
             showToast(`Sidebar link deployed to ${successCount} site(s)!`, 'success');
@@ -537,6 +617,62 @@ async function loadTasks() {
     }
   } catch (err) {
     console.error('Failed to load tasks', err);
+  }
+}
+
+async function updateBacklinkMappingSummary() {
+  const mode = document.getElementById('backlinkModeSelect').value;
+  const summaryBox = document.getElementById('backlinkMappingSummary');
+  if (!summaryBox) return;
+
+  const selectedCbs = document.querySelectorAll('#targetSitesContainer .target-site-checkbox:checked');
+  const selectedDomainIds = Array.from(selectedCbs).map(cb => parseInt(cb.value, 10));
+
+  if (mode === 'none' || !selectedDomainIds.length) {
+    summaryBox.classList.add('hidden');
+    return;
+  }
+
+  summaryBox.classList.remove('hidden');
+
+  if (mode === 'single') {
+    const url = document.getElementById('singleBacklinkUrl').value.trim() || '[No URL]';
+    const keyword = document.getElementById('singleBacklinkKeyword').value.trim() || '[No Keyword]';
+
+    summaryBox.innerHTML = `
+      <strong>Single Mode Mapping:</strong> Applying backlink <code>&lt;a href="${escapeHtml(url)}"&gt;${escapeHtml(keyword)}&lt;/a&gt;</code> to all ${selectedDomainIds.length} selected target website(s).
+    `;
+  } else if (mode === 'bulk') {
+    const text = document.getElementById('bulkBacklinkText').value.trim();
+    try {
+      const res = await fetch('/api/articles/validate-backlinks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bulkBacklinksText: text, selectedDomainIds })
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        summaryBox.innerHTML = `
+          <div style="color:var(--danger); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Bulk Backlink Configuration Error</div>
+          ${data.mismatchError ? `<div style="color:var(--danger); font-size:0.8rem;">${escapeHtml(data.mismatchError)}</div>` : ''}
+          ${data.invalidLines.length > 0 ? `<div style="color:var(--danger); font-size:0.8rem;">Invalid lines: ${data.invalidLines.map(l => `#${l.lineNumber}`).join(', ')}</div>` : ''}
+        `;
+      } else {
+        const mappingHtml = data.validPairs.map((pair, idx) => {
+          const domObj = state.domains.find(d => d.id === selectedDomainIds[idx]);
+          const domName = domObj ? domObj.domain : `Site ID ${selectedDomainIds[idx]}`;
+          return `<li><strong>${escapeHtml(domName)}</strong> &rarr; <code>${escapeHtml(pair.url)}</code> (${escapeHtml(pair.keyword)})</li>`;
+        }).join('');
+
+        summaryBox.innerHTML = `
+          <div style="color:var(--success); font-weight:600; margin-bottom:4px;"><i class="fa-solid fa-check"></i> Valid 1-to-1 Mapping (${data.validPairCount} Pair(s))</div>
+          <ol style="margin-left:20px; font-size:0.8rem;">${mappingHtml}</ol>
+        `;
+      }
+    } catch (err) {
+      summaryBox.innerHTML = `<div style="color:var(--danger);">Error validating backlinks</div>`;
+    }
   }
 }
 
@@ -765,14 +901,18 @@ function renderDashboardStats() {
 function renderTargetSitesList() {
   const articleContainer = document.getElementById('targetSitesContainer');
   const sidebarContainer = document.getElementById('sidebarTargetSitesContainer');
+  const badgeCount = document.getElementById('connectedSiteCountBadge');
 
-  const articleContentHtml = state.domains.length ? state.domains.map(d => `
+  const connectedDomains = state.domains.filter(d => d.status === 'connected');
+  if (badgeCount) badgeCount.textContent = connectedDomains.length;
+
+  const articleContentHtml = connectedDomains.length ? connectedDomains.map(d => `
     <label class="target-site-item" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <input type="checkbox" value="${d.id}" class="target-site-checkbox">
+      <input type="checkbox" value="${d.id}" class="target-site-checkbox" onchange="updateBacklinkMappingSummary()">
       <span>${escapeHtml(d.domain)}</span>
-      <span class="badge ${d.status === 'connected' ? 'badge-success' : 'badge-warning'}" style="font-size:0.65rem;">${d.status}</span>
+      <span class="badge badge-success" style="font-size:0.65rem;">connected</span>
     </label>
-  `).join('') : '<p class="empty-msg">No websites registered yet.</p>';
+  `).join('') : '<p class="empty-msg">No connected websites available. Run connection ping on registered sites first.</p>';
 
   const sidebarContentHtml = state.domains.length ? state.domains.map(d => `
     <label class="target-site-item" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">

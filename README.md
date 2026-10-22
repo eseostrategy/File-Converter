@@ -12,10 +12,28 @@ PBN Commander is a centralized WordPress website and Private Blog Network (PBN) 
 - **2-Step Bulk Import Workflow:** Preview parsed CSV/TSV data with row-level status validation (Valid, Duplicate, Invalid) prior to committing valid rows to the database.
 - **Custom Client WordPress Plugin:** Custom WordPress plugin connector (`wordpress-plugin/pbn-commander-client/pbn-commander-client.php`) supporting encrypted HMAC SHA-256 signature authorization, 5-minute replay window protection, REST endpoints (`/ping`, `/publish`, `/sidebar-links`), and custom sidebar link widgets.
 - **Real WordPress Connectivity:** Actual HTTP API requests dispatched with HMAC signature headers to WordPress endpoints (`/wp-json/pbn-commander/v1/ping`, `/publish`, `/sidebar-links`).
-- **Article Publisher Engine:** Rich HTML content publishing, post preview, target site selection, post status (`publish` or `draft`), categories, tags, featured image URL, canonical URL, and per-site publishing history logs.
+- **Article Publisher & Backlink Engine:** Rich HTML content publishing, post preview, target site selection, post status (`publish` or `draft`), categories, tags, featured image URL, canonical URL, and per-site publishing history logs.
+- **Backlink Insertion Modes:** Supports inserting backlinks into published article content via:
+  - *Same URL & Keyword for All:* A single client landing page URL and anchor keyword appended across all target sites.
+  - *Bulk Pairs (1-to-1 Mapping):* Paste bulk URL and keyword pairs (`https://client.com/page | Anchor Text`) with deterministic 1-to-1 mapping across selected target domains.
+- **Manual Domain Paste Matching:** Fast domain matching sidebar tool that parses pasted raw domain lists, matches them against registered connected domains in the SQLite database, reports connection status badges (*Matched Connected*, *Matched Disconnected*, *Unknown Domains*), and automatically selects matched connected target sites.
 - **Sidebar Link Management:** Centralized control over sidebar widget links, custom anchor text, target URLs, `rel` attributes (`dofollow`, `nofollow`, `sponsored`, `ugc`), target attributes (`_blank`, `_self`), and campaign names.
 - **Activity & Security Audit Log:** Complete event audit trail recording site registration, connection checks, article publishing, sidebar deployments, and security events.
 - **Security Hardening:** Express Rate Limiting, Helmet HTTP security headers, input sanitization, timing-safe HMAC signature verification, SSRF blocking of loopback/private IPs, and secure site key masking.
+
+---
+
+## Article Publisher & Backlink Features
+
+### 1. Backlink Insertion Modes
+- **Same URL & Keyword for All:** Enter one target URL and anchor keyword. Every selected site receives the same backlink appended safely to the post body using WordPress `wp_kses_post`.
+- **Bulk Pairs (1-to-1 Mapping):** Paste bulk backlink lines formatted as `Target URL | Anchor Keyword`. The system validates all URLs and matches line 1 to Site 1, line 2 to Site 2, and so on.
+
+### 2. Manual Domain Paste Box
+Located on the right sidebar of the Article Publisher:
+1. Paste a list of domain names (one per line).
+2. Click **Match & Select Connected Domains**.
+3. The dashboard parses and normalizes the domains, matches them against connected sites in SQLite, reports status badges, and automatically checks the matching connected sites for publishing.
 
 ---
 

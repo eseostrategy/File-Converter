@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db');
 const { sendWpRequest } = require('../utils/wpClient');
+const { parseBulkBacklinks, matchPastedDomains } = require('../utils/backlinkMatcher');
 
 function sanitizeHtml(html) {
   if (!html) return '';
@@ -35,12 +36,102 @@ router.get('/history', (req, res) => {
   });
 });
 
-// POST /api/articles/publish — Publish article to selected target domains via real WP API
+// POST /api/articles/match-domains — Match raw pasted domains against registered connected domains
+router.post('/match-domains', (req, res) => {
+  const { rawDomainsText } = req.body;
+  if (!rawDomainsText) {
+    return res.status(400).json({ error: 'Domain text is required' });
+  }
+
+  const db = getDb();
+  db.all(`SELECT id, domain, status, label FROM domains`, [], (err, registeredDomains) => {
+    if (err) return res.status(500).json({ error: 'Failed to query domains' });
+
+    const matchResult = matchPastedDomains(rawDomainsText, registeredDomains);
+    res.json({
+      success: true,
+      ...matchResult
+    });
+  });
+});
+
+// POST /api/articles/validate-backlinks — Parse and validate bulk backlinks against selected domains
+router.post('/validate-backlinks', (req, res) => {
+  const { bulkBacklinksText, selectedDomainIds } = req.body;
+
+  const { validPairs, invalidLines } = parseBulkBacklinks(bulkBacklinksText);
+  const targetCount = Array.isArray(selectedDomainIds) ? selectedDomainIds.length : 0;
+
+  let mismatchError = null;
+  if (targetCount > 0 && validPairs.length !== targetCount) {
+    mismatchError = `Count mismatch: You selected ${targetCount} domain(s), but provided ${validPairs.length} valid URL/keyword pair(s). Exactly one pair per domain is required.`;
+  }
+
+  res.json({
+    success: invalidLines.length === 0 && !mismatchError,
+    validPairs,
+    invalidLines,
+    mismatchError,
+    targetCount,
+    validPairCount: validPairs.length
+  });
+});
+
+// POST /api/articles/publish — Publish article to selected target domains via real WP API with backlinks
 router.post('/publish', async (req, res) => {
-  const { title, content, categories, tags, featured_image, canonical_url, status, domain_ids } = req.body;
+  const {
+    title,
+    content,
+    categories,
+    tags,
+    featured_image,
+    canonical_url,
+    status,
+    domain_ids,
+    backlink_mode,
+    backlink_url,
+    backlink_keyword,
+    bulk_backlinks_text
+  } = req.body;
 
   if (!title || !content || !Array.isArray(domain_ids) || !domain_ids.length) {
     return res.status(400).json({ error: 'Title, content, and at least one target site required' });
+  }
+
+  // Validate backlink configuration
+  let backlinkMap = new Map(); // domain_id -> { url, keyword }
+
+  if (backlink_mode === 'bulk') {
+    const { validPairs, invalidLines } = parseBulkBacklinks(bulk_backlinks_text);
+
+    if (invalidLines.length > 0) {
+      return res.status(400).json({
+        error: `Invalid lines in bulk backlinks. Line ${invalidLines[0].lineNumber}: ${invalidLines[0].error}`
+      });
+    }
+
+    if (validPairs.length !== domain_ids.length) {
+      return res.status(400).json({
+        error: `Count mismatch: Selected ${domain_ids.length} domain(s), but provided ${validPairs.length} valid backlink pair(s). Exactly one pair per domain is required.`
+      });
+    }
+
+    domain_ids.forEach((id, idx) => {
+      backlinkMap.set(id, {
+        url: validPairs[idx].url,
+        keyword: validPairs[idx].keyword
+      });
+    });
+  } else if (backlink_mode === 'single' || (backlink_url && backlink_keyword)) {
+    if (!backlink_url || !backlink_keyword) {
+      return res.status(400).json({ error: 'Both backlink URL and anchor keyword are required for single backlink mode' });
+    }
+    domain_ids.forEach(id => {
+      backlinkMap.set(id, {
+        url: backlink_url.trim(),
+        keyword: backlink_keyword.trim()
+      });
+    });
   }
 
   const sanitizedContent = sanitizeHtml(content);
@@ -63,6 +154,8 @@ router.post('/publish', async (req, res) => {
         }
 
         for (const domain of domains) {
+          const siteBacklink = backlinkMap.get(domain.id);
+
           const payload = {
             title,
             content: sanitizedContent,
@@ -70,7 +163,9 @@ router.post('/publish', async (req, res) => {
             categories,
             tags,
             featured_image,
-            canonical_url
+            canonical_url,
+            backlink_url: siteBacklink ? siteBacklink.url : null,
+            backlink_keyword: siteBacklink ? siteBacklink.keyword : null
           };
 
           const wpRes = await sendWpRequest(domain.domain, '/publish', payload, domain.site_key);
@@ -90,7 +185,8 @@ router.post('/publish', async (req, res) => {
               domain: domain.domain,
               status: 'published',
               remote_post_id: remotePostId,
-              remote_post_url: remotePostUrl
+              remote_post_url: remotePostUrl,
+              backlink_used: siteBacklink || null
             });
           } else {
             const errorMsg = wpRes.error || (wpRes.data && wpRes.data.message) || 'Publishing failed';
@@ -103,7 +199,8 @@ router.post('/publish', async (req, res) => {
             results.push({
               domain: domain.domain,
               status: 'failed',
-              error: errorMsg
+              error: errorMsg,
+              backlink_used: siteBacklink || null
             });
           }
         }
