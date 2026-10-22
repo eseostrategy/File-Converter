@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PBN Commander — Centralized WordPress Management</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">
+          <i class="fa-solid fa-network-wired"></i>
+          <span class="brand-name">PBN Commander</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <ul>
+          <li class="nav-item active" data-tab="dashboard">
+            <a href="#dashboard"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span></a>
+          </li>
+          <li class="nav-item" data-tab="domains">
+            <a href="#domains"><i class="fa-solid fa-globe"></i> <span>Domains & Sites</span></a>
+          </li>
+          <li class="nav-item" data-tab="articles">
+            <a href="#articles"><i class="fa-solid fa-newspaper"></i> <span>Article Publisher</span></a>
+          </li>
+          <li class="nav-item" data-tab="sidebar-links">
+            <a href="#sidebar-links"><i class="fa-solid fa-link"></i> <span>Sidebar Links</span></a>
+          </li>
+          <li class="nav-item" data-tab="tasks">
+            <a href="#tasks"><i class="fa-solid fa-list-check"></i> <span>Task Queue</span></a>
+          </li>
+          <li class="nav-item" data-tab="activity">
+            <a href="#activity"><i class="fa-solid fa-clock-rotate-left"></i> <span>Activity Logs</span></a>
+          </li>
+          <li class="nav-item" data-tab="plugin">
+            <a href="#plugin"><i class="fa-brands fa-wordpress"></i> <span>WP Plugin Client</span></a>
+          </li>
+          <li class="nav-item" data-tab="settings">
+            <a href="#settings"><i class="fa-solid fa-sliders"></i> <span>Settings</span></a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="avatar"><i class="fa-solid fa-user-shield"></i></div>
+          <div class="user-details">
+            <span class="user-name" id="currentUserName">Admin User</span>
+            <span class="user-role">Administrator</span>
+          </div>
+        </div>
+        <button class="btn-logout" id="btnLogout" title="Sign Out">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="mobile-menu-toggle" id="mobileMenuToggle">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <h1 class="page-title" id="pageTitle">Overview Dashboard</h1>
+        </div>
+
+        <div class="header-right">
+          <div class="system-status badge badge-success" id="systemStatusBadge">
+            <i class="fa-solid fa-circle"></i> System Online
+          </div>
+
+          <button class="theme-toggle" id="themeToggle" title="Toggle Theme (Light/Dark)">
+            <i class="fa-solid fa-sun" id="themeIconSun"></i>
+            <i class="fa-solid fa-moon" id="themeIconMoon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic Tab Content -->
+      <main class="content-area" id="contentArea">
+        <!-- 1. DASHBOARD OVERVIEW -->
+        <section class="tab-pane active" id="pane-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon bg-primary-light text-primary">
+                <i class="fa-solid fa-globe"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Total Sites</span>
+                <span class="stat-value" id="statTotalSites">0</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon bg-success-light text-success">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Connected Sites</span>
+                <span class="stat-value" id="statConnectedSites">0</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon bg-warning-light text-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Action Required</span>
+                <span class="stat-value" id="statPendingSites">0</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon bg-info-light text-info">
+                <i class="fa-solid fa-newspaper"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Articles Published</span>
+                <span class="stat-value" id="statPublishedArticles">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2-col">
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-signal"></i> Network Health Overview</h3>
+                <button class="btn btn-sm btn-secondary" id="btnPingAllSites">
+                  <i class="fa-solid fa-rotate"></i> Ping All Sites
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="network-health-summary">
+                  <div class="progress-bar-container">
+                    <div class="progress-label">
+                      <span>Connection Success Rate</span>
+                      <span id="healthPercentage">100%</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill bg-success" id="healthFill" style="width: 100%;"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="recent-sites-list" id="dashboardRecentSites">
+                  <div class="empty-state">
+                    <i class="fa-solid fa-globe"></i>
+                    <p>No domains added yet. Add your first website to monitor connectivity.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity</h3>
+              </div>
+              <div class="card-body">
+                <ul class="activity-feed" id="dashboardRecentActivity">
+                  <li class="activity-item empty">No recent activity logged.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. DOMAIN MANAGEMENT -->
+        <section class="tab-pane" id="pane-domains">
+          <div class="action-bar">
+            <div class="search-filter-group">
+              <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="domainSearchInput" placeholder="Search domain, label, or note...">
+              </div>
+              <select id="domainStatusFilter" class="form-select">
+                <option value="all">All Connection Statuses</option>
+                <option value="connected">Connected</option>
+                <option value="disconnected">Disconnected</option>
+                <option value="pending">Pending Plugin / Key</option>
+              </select>
+            </div>
+
+            <div class="button-group">
+              <button class="btn btn-secondary" id="btnBulkImportModal">
+                <i class="fa-solid fa-file-import"></i> Bulk Import
+              </button>
+              <button class="btn btn-primary" id="btnAddDomainModal">
+                <i class="fa-solid fa-plus"></i> Add Domain
+              </button>
+            </div>
+          </div>
+
+          <div class="bulk-action-bar hidden" id="bulkDomainActionBar">
+            <span class="selected-count" id="selectedDomainCount">0 domains selected</span>
+            <div class="bulk-buttons">
+              <button class="btn btn-sm btn-outline" id="btnBulkCheckConnection">
+                <i class="fa-solid fa-plug"></i> Check Connection
+              </button>
+              <button class="btn btn-sm btn-danger" id="btnBulkDeleteDomains">
+                <i class="fa-solid fa-trash"></i> Delete Selected
+              </button>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-responsive">
+              <table class="data-table" id="domainsTable">
+                <thead>
+                  <tr>
+                    <th width="40"><input type="checkbox" id="selectAllDomains"></th>
+                    <th>Domain / URL</th>
+                    <th>Status</th>
+                    <th>Labels</th>
+                    <th>Last Connection Check</th>
+                    <th>Last Successful Sync</th>
+                    <th width="140">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="domainsTableBody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. ARTICLE PUBLISHER -->
+        <section class="tab-pane" id="pane-articles">
+          <div class="grid-2-col-wide-left">
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> Create & Publish Article</h3>
+              </div>
+              <div class="card-body">
+                <form id="articleForm">
+                  <div class="form-group">
+                    <label for="articleTitle">Article Title <span class="required">*</span></label>
+                    <input type="text" id="articleTitle" class="form-input" placeholder="e.g. 10 Essential SEO Tips for 2025" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="articleContent">Content (HTML / Plain Text) <span class="required">*</span></label>
+                    <textarea id="articleContent" class="form-textarea" rows="12" placeholder="Write or paste HTML content here..." required></textarea>
+                  </div>
+
+                  <div class="grid-2-col">
+                    <div class="form-group">
+                      <label for="articleCategory">Categories (Comma separated)</label>
+                      <input type="text" id="articleCategory" class="form-input" placeholder="e.g. SEO, Marketing">
+                    </div>
+                    <div class="form-group">
+                      <label for="articleTags">Tags (Comma separated)</label>
+                      <input type="text" id="articleTags" class="form-input" placeholder="e.g. backlinks, pbn, rankings">
+                    </div>
+                  </div>
+
+                  <div class="grid-2-col">
+                    <div class="form-group">
+                      <label for="articleFeaturedImage">Featured Image URL</label>
+                      <input type="url" id="articleFeaturedImage" class="form-input" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div class="form-group">
+                      <label for="articleCanonical">Canonical URL</label>
+                      <input type="url" id="articleCanonical" class="form-input" placeholder="https://originalsource.com/post">
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="articlePostStatus">Post Status</label>
+                    <select id="articlePostStatus" class="form-select">
+                      <option value="publish">Publish Immediately</option>
+                      <option value="draft">Save as Draft</option>
+                    </select>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btnPreviewArticle">
+                      <i class="fa-solid fa-eye"></i> Preview Article
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnPublishArticle">
+                      <i class="fa-solid fa-paper-plane"></i> Publish to Selected Sites
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-bullseye"></i> Target Websites</h3>
+              </div>
+              <div class="card-body">
+                <div class="target-sites-selector">
+                  <div class="target-selector-header">
+                    <label><input type="checkbox" id="selectAllTargetSites"> Select All Connected Sites</label>
+                  </div>
+                  <div class="target-sites-list" id="targetSitesContainer">
+                    <p class="empty-msg">No connected websites available. Add and verify websites in Domains panel first.</p>
+                  </div>
+                </div>
+
+                <div class="publishing-history-summary mt-4">
+                  <h4><i class="fa-solid fa-history"></i> Recent Publishing History</h4>
+                  <div class="history-list" id="recentPublishingHistory">
+                    <p class="empty-msg">No articles published yet.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. SIDEBAR LINK MANAGEMENT -->
+        <section class="tab-pane" id="pane-sidebar-links">
+          <div class="grid-2-col-wide-left">
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-link"></i> Configure Sidebar Link</h3>
+              </div>
+              <div class="card-body">
+                <form id="sidebarLinkForm">
+                  <div class="form-group">
+                    <label for="linkUrl">Destination URL <span class="required">*</span></label>
+                    <input type="url" id="linkUrl" class="form-input" placeholder="https://targetwebsite.com/landing-page" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="linkAnchor">Anchor Text <span class="required">*</span></label>
+                    <input type="text" id="linkAnchor" class="form-input" placeholder="e.g. Best SEO Tools" required>
+                  </div>
+
+                  <div class="grid-2-col">
+                    <div class="form-group">
+                      <label for="linkRel">HTML Rel Attribute</label>
+                      <select id="linkRel" class="form-select">
+                        <option value="dofollow">dofollow (Standard link)</option>
+                        <option value="nofollow">nofollow</option>
+                        <option value="sponsored">sponsored</option>
+                        <option value="ugc">ugc</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="linkTarget">Target Attribute</label>
+                      <select id="linkTarget" class="form-select">
+                        <option value="_blank">_blank (Open in new tab)</option>
+                        <option value="_self">_self (Same window)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="grid-2-col">
+                    <div class="form-group">
+                      <label for="linkCampaign">Campaign Name</label>
+                      <input type="text" id="linkCampaign" class="form-input" placeholder="e.g. Spring 2025 Campaign">
+                    </div>
+
+                    <div class="form-group">
+                      <label for="linkPlacement">Widget Title / Header</label>
+                      <input type="text" id="linkPlacement" class="form-input" placeholder="e.g. Recommended Resources">
+                    </div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="btnDeploySidebarLink">
+                      <i class="fa-solid fa-bolt"></i> Deploy Link to Target Websites
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-layer-group"></i> Target Sites Selection</h3>
+              </div>
+              <div class="card-body">
+                <div class="target-sites-selector">
+                  <div class="target-selector-header">
+                    <label><input type="checkbox" id="selectAllSidebarTargetSites"> Select All Connected Sites</label>
+                  </div>
+                  <div class="target-sites-list" id="sidebarTargetSitesContainer">
+                    <p class="empty-msg">No connected websites available.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-list-ul"></i> Active Deployed Sidebar Links</h3>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="data-table" id="sidebarLinksTable">
+                  <thead>
+                    <tr>
+                      <th>Campaign</th>
+                      <th>Anchor Text</th>
+                      <th>Target URL</th>
+                      <th>Rel</th>
+                      <th>Target Sites</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sidebarLinksTableBody">
+                    <!-- Rendered via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. TASK QUEUE -->
+        <section class="tab-pane" id="pane-tasks">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-list-check"></i> Background Bulk Task Queue</h3>
+              <button class="btn btn-sm btn-secondary" id="btnRefreshTasks">
+                <i class="fa-solid fa-rotate"></i> Refresh
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="data-table" id="tasksTable">
+                  <thead>
+                    <tr>
+                      <th>Task ID</th>
+                      <th>Task Type</th>
+                      <th>Progress</th>
+                      <th>Status</th>
+                      <th>Created At</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tasksTableBody">
+                    <!-- Rendered via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. ACTIVITY LOGS -->
+        <section class="tab-pane" id="pane-activity">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-clock-rotate-left"></i> Security & Activity Audit Log</h3>
+              <button class="btn btn-sm btn-secondary" id="btnRefreshActivity">
+                <i class="fa-solid fa-rotate"></i> Refresh
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="data-table" id="activityTable">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Action / Event</th>
+                      <th>Target Domain</th>
+                      <th>Status</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="activityTableBody">
+                    <!-- Rendered via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. WP PLUGIN CLIENT DOWNLOAD -->
+        <section class="tab-pane" id="pane-plugin">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fa-brands fa-wordpress"></i> PBN Commander Client WordPress Plugin</h3>
+            </div>
+            <div class="card-body">
+              <div class="plugin-download-banner">
+                <div class="plugin-info">
+                  <h2>Download & Install Official Client Plugin</h2>
+                  <p>Install this plugin on each child WordPress website to enable secure encrypted HMAC communication, automated article publishing, and sidebar link widget control.</p>
+                </div>
+                <a href="/api/plugin/download" class="btn btn-success btn-lg" download>
+                  <i class="fa-solid fa-download"></i> Download Plugin ZIP
+                </a>
+              </div>
+
+              <div class="setup-guide-steps mt-4">
+                <h3>Installation Steps:</h3>
+                <ol class="step-list">
+                  <li>Download the <code>pbn-commander-client.zip</code> file using the button above.</li>
+                  <li>Log in to your WordPress admin dashboard (e.g. <code>https://yourchildsite.com/wp-admin</code>).</li>
+                  <li>Go to <strong>Plugins &rarr; Add New &rarr; Upload Plugin</strong> and upload the ZIP file.</li>
+                  <li>Activate the <strong>PBN Commander Client</strong> plugin.</li>
+                  <li>Navigate to <strong>PBN Commander</strong> in your WordPress sidebar.</li>
+                  <li>Copy the unique <strong>Site API Key</strong> generated for your domain from this dashboard and paste it into the plugin settings page.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. SETTINGS -->
+        <section class="tab-pane" id="pane-settings">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-sliders"></i> Application Configuration</h3>
+            </div>
+            <div class="card-body">
+              <form id="settingsForm">
+                <div class="form-group">
+                  <label for="jwtSecretConfig">JWT Secret Key</label>
+                  <input type="password" id="jwtSecretConfig" class="form-input" value="••••••••••••••••" readonly>
+                  <small class="form-text">Configured via environment variable <code>JWT_SECRET</code>.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="dbPathConfig">SQLite Database Path</label>
+                  <input type="text" id="dbPathConfig" class="form-input" value="./pbn_commander.db" readonly>
+                </div>
+
+                <div class="form-group">
+                  <label for="themeDefaultSelect">Default Theme</label>
+                  <select id="themeDefaultSelect" class="form-select">
+                    <option value="dark">Dark Mode (Default)</option>
+                    <option value="light">Light Mode</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Add Domain Modal -->
+  <div class="modal-backdrop hidden" id="modalAddDomain">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add New Website</h3>
+        <button class="modal-close" data-close="modalAddDomain">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addDomainForm">
+          <div class="form-group">
+            <label for="addDomainUrl">Website Domain / URL <span class="required">*</span></label>
+            <input type="text" id="addDomainUrl" class="form-input" placeholder="https://example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="addDomainLabel">Labels / Tags (Comma separated)</label>
+            <input type="text" id="addDomainLabel" class="form-input" placeholder="e.g. Tech, Niche-1, High-DA">
+          </div>
+          <div class="form-group">
+            <label for="addDomainNotes">Notes</label>
+            <textarea id="addDomainNotes" class="form-textarea" rows="3" placeholder="Optional internal notes..."></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close="modalAddDomain">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Website</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Import Modal -->
+  <div class="modal-backdrop hidden" id="modalBulkImport">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Bulk Import Websites</h3>
+        <button class="modal-close" data-close="modalBulkImport">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="bulkImportForm">
+          <div class="form-group">
+            <label for="bulkDomainList">Enter Domains (One domain per line) <span class="required">*</span></label>
+            <textarea id="bulkDomainList" class="form-textarea" rows="8" placeholder="https://site1.com&#10;https://site2.org&#10;site3.net" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="bulkDomainDefaultLabel">Default Label (Optional)</label>
+            <input type="text" id="bulkDomainDefaultLabel" class="form-input" placeholder="e.g. Bulk Import Batch 1">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close="modalBulkImport">Cancel</button>
+            <button type="submit" class="btn btn-primary">Import Websites</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Modal -->
+  <div class="modal-backdrop hidden" id="modalSiteKey">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>WordPress Site Credentials</h3>
+        <button class="modal-close" data-close="modalSiteKey">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">Copy this Site API Key and paste it into the <strong>PBN Commander Client</strong> plugin settings on <strong id="siteKeyDomain"></strong>:</p>
+        <div class="key-box">
+          <input type="text" id="siteKeyDisplay" class="form-input" readonly>
+          <button class="btn btn-secondary" id="btnCopySiteKey"><i class="fa-solid fa-copy"></i> Copy</button>
+        </div>
+        <div class="modal-footer mt-4">
+          <button type="button" class="btn btn-primary" data-close="modalSiteKey">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

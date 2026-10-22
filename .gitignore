@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.db
+*.sqlite
+coverage/
+playwright-report/
+test-results/
+verify_server.log
+test_server.log

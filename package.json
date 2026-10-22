@@ -1,0 +1,29 @@
+{
+  "name": "pbn-commander",
+  "version": "1.0.0",
+  "description": "Centralized WordPress website & PBN management dashboard",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "jest --runInBand --detectOpenHandles --testPathIgnorePatterns=tests/frontend.spec.js",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
