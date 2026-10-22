@@ -40,20 +40,22 @@ describe('Article Backlink Publishing & Domain Matcher API Integration Tests', (
     expect(res.body.unknown[0]).toEqual('unknown-domain.com');
   });
 
-  it('POST /api/articles/validate-backlinks should detect count mismatch for bulk pairs', async () => {
+  it('POST /api/articles/preview should detect count mismatch for side-by-side line pairing', async () => {
     const res = await request(app)
-      .post('/api/articles/validate-backlinks')
+      .post('/api/articles/preview')
       .send({
-        bulkBacklinksText: 'https://client1.com | Keyword 1',
-        selectedDomainIds: [domain1Id, domain2Id]
+        content: '<p>Article content</p>',
+        url_mode: 'different',
+        client_url_text: 'https://client1.com',
+        client_keyword_text: 'Keyword 1\nKeyword 2',
+        domain_ids: [domain1Id, domain2Id]
       });
 
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.success).toBe(false);
-    expect(res.body.mismatchError).toContain('Count mismatch');
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.error).toContain('validation failed');
   });
 
-  it('POST /api/articles/publish with bulk backlinks should map 1-to-1 deterministically and publish to WP', async () => {
+  it('POST /api/articles/publish with side-by-side backlinks should map 1-to-1 deterministically and publish to WP', async () => {
     let capturedRequests = [];
     global.fetch = jest.fn().mockImplementation((url, opts) => {
       capturedRequests.push({ url, body: JSON.parse(opts.body) });
@@ -68,8 +70,9 @@ describe('Article Backlink Publishing & Domain Matcher API Integration Tests', (
       title: 'Bulk Backlink Article',
       content: '<p>Content body</p>',
       domain_ids: [domain1Id, domain2Id],
-      backlink_mode: 'bulk',
-      bulk_backlinks_text: 'https://clientA.com | Anchor A\nhttps://clientB.com | Anchor B'
+      url_mode: 'different',
+      client_url_text: 'https://clientA.com\nhttps://clientB.com',
+      client_keyword_text: 'Anchor A\nAnchor B'
     };
 
     const res = await request(app).post('/api/articles/publish').send(payload);

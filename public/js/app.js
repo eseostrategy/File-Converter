@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const state = {
   domains: [],
+  orderedDomainIds: [], // Explicit user domain ordering
+  sidebarOrderedDomainIds: [],
   selectedDomainIds: new Set(),
   bulkPreviewData: null,
   articles: [],
@@ -137,10 +139,14 @@ function initEventHandlers() {
   if (selectAllTargetSites) {
     selectAllTargetSites.addEventListener('change', (e) => {
       const checked = e.target.checked;
-      document.querySelectorAll('#targetSitesContainer .target-site-checkbox').forEach(cb => {
-        cb.checked = checked;
-      });
-      updateBacklinkMappingSummary();
+      const connected = state.domains.filter(d => d.status === 'connected').map(d => d.id);
+      if (checked) {
+        state.orderedDomainIds = Array.from(new Set([...state.orderedDomainIds, ...connected]));
+      } else {
+        state.orderedDomainIds = [];
+      }
+      renderOrderedDomainList();
+      updateMappingPreview();
     });
   }
 
@@ -148,10 +154,58 @@ function initEventHandlers() {
   if (selectAllSidebarTargetSites) {
     selectAllSidebarTargetSites.addEventListener('change', (e) => {
       const checked = e.target.checked;
-      document.querySelectorAll('#sidebarTargetSitesContainer .sidebar-target-checkbox').forEach(cb => {
-        cb.checked = checked;
-      });
+      const connected = state.domains.filter(d => d.status === 'connected').map(d => d.id);
+      if (checked) {
+        state.sidebarOrderedDomainIds = Array.from(new Set([...state.sidebarOrderedDomainIds, ...connected]));
+      } else {
+        state.sidebarOrderedDomainIds = [];
+      }
+      renderSidebarOrderedDomainList();
     });
+  }
+
+  // Article Content Mode Toggle
+  const articleModeSelect = document.getElementById('articleModeSelect');
+  if (articleModeSelect) {
+    articleModeSelect.addEventListener('change', (e) => {
+      const mode = e.target.value;
+      const spinBox = document.getElementById('spinStrategyBox');
+      if (mode === 'spin') {
+        spinBox.classList.remove('hidden');
+      } else {
+        spinBox.classList.add('hidden');
+      }
+      updateMappingPreview();
+    });
+  }
+
+  // Spin Strategy Toggle
+  const spinStrategySelect = document.getElementById('spinStrategySelect');
+  if (spinStrategySelect) {
+    spinStrategySelect.addEventListener('change', () => {
+      updateMappingPreview();
+    });
+  }
+
+  // URL Mode Selectors
+  const urlModeSelect = document.getElementById('urlModeSelect');
+  if (urlModeSelect) {
+    urlModeSelect.addEventListener('change', () => updateMappingPreview());
+  }
+
+  const clientUrlText = document.getElementById('clientUrlText');
+  if (clientUrlText) {
+    clientUrlText.addEventListener('input', () => updateMappingPreview());
+  }
+
+  const clientKeywordText = document.getElementById('clientKeywordText');
+  if (clientKeywordText) {
+    clientKeywordText.addEventListener('input', () => updateMappingPreview());
+  }
+
+  const articleContent = document.getElementById('articleContent');
+  if (articleContent) {
+    articleContent.addEventListener('input', () => updateMappingPreview());
   }
 
   // Manual Domain Matching
@@ -172,69 +226,34 @@ function initEventHandlers() {
         });
         const data = await res.json();
         if (res.ok) {
-          // Uncheck all target site checkboxes first
-          document.querySelectorAll('#targetSitesContainer .target-site-checkbox').forEach(cb => cb.checked = false);
+          // Set state.orderedDomainIds to match exact user order
+          const matchedIds = data.matchedConnected.map(d => d.id);
+          state.orderedDomainIds = matchedIds;
 
-          // Check matched connected domain checkboxes
-          const matchedIds = new Set(data.matchedConnected.map(d => d.id));
-          document.querySelectorAll('#targetSitesContainer .target-site-checkbox').forEach(cb => {
-            if (matchedIds.has(parseInt(cb.value, 10))) {
-              cb.checked = true;
-            }
-          });
+          renderOrderedDomainList();
 
           // Render Status Badges
           const reportBox = document.getElementById('manualMatchStatusReport');
           reportBox.classList.remove('hidden');
           reportBox.innerHTML = `
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
-              <span class="badge badge-success"><i class="fa-solid fa-check"></i> Matched Connected: ${data.matchedConnected.length}</span>
-              ${data.matchedDisconnected.length > 0 ? `<span class="badge badge-warning"><i class="fa-solid fa-plug"></i> Matched Disconnected: ${data.matchedDisconnected.length}</span>` : ''}
-              ${data.unknown.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-question"></i> Unknown Domains: ${data.unknown.length}</span>` : ''}
-              ${data.invalid.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Invalid Lines: ${data.invalid.length}</span>` : ''}
+              <span class="badge badge-success"><i class="fa-solid fa-check"></i> Connected: ${data.matchedConnected.length}</span>
+              ${data.matchedDisconnected.length > 0 ? `<span class="badge badge-warning"><i class="fa-solid fa-plug"></i> Disconnected: ${data.matchedDisconnected.length}</span>` : ''}
+              ${data.unknown.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-question"></i> Unknown: ${data.unknown.length}</span>` : ''}
+              ${data.invalid.length > 0 ? `<span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Invalid: ${data.invalid.length}</span>` : ''}
             </div>
             ${data.matchedDisconnected.length > 0 ? `<div style="color:var(--warning); margin-top:4px;">Disconnected domains cannot be published to until plugin ping succeeds.</div>` : ''}
             ${data.unknown.length > 0 ? `<div style="color:var(--danger); margin-top:2px;">Unknown domains: ${escapeHtml(data.unknown.join(', '))}</div>` : ''}
           `;
 
-          showToast(`Selected ${data.matchedConnected.length} connected domain(s)!`, 'success');
-          updateBacklinkMappingSummary();
+          showToast(`Resolved ${matchedIds.length} connected domain(s) in order!`, 'success');
+          updateMappingPreview();
         } else {
-          showToast(data.error || 'Failed to match domains', 'danger');
+          showToast(data.error || 'Failed to resolve domains', 'danger');
         }
       } catch (err) {
         showToast('Network error matching domains', 'danger');
       }
-    });
-  }
-
-  // Backlink Mode Switcher
-  const backlinkModeSelect = document.getElementById('backlinkModeSelect');
-  if (backlinkModeSelect) {
-    backlinkModeSelect.addEventListener('change', (e) => {
-      const mode = e.target.value;
-      const singleBox = document.getElementById('singleBacklinkBox');
-      const bulkBox = document.getElementById('bulkBacklinkBox');
-
-      if (mode === 'single') {
-        singleBox.classList.remove('hidden');
-        bulkBox.classList.add('hidden');
-      } else if (mode === 'bulk') {
-        singleBox.classList.add('hidden');
-        bulkBox.classList.remove('hidden');
-      } else {
-        singleBox.classList.add('hidden');
-        bulkBox.classList.add('hidden');
-      }
-      updateBacklinkMappingSummary();
-    });
-  }
-
-  // Validate Bulk Backlinks Button
-  const btnValidateBulkBacklinks = document.getElementById('btnValidateBulkBacklinks');
-  if (btnValidateBulkBacklinks) {
-    btnValidateBulkBacklinks.addEventListener('click', () => {
-      updateBacklinkMappingSummary();
     });
   }
 
@@ -383,48 +402,39 @@ function initEventHandlers() {
     });
   }
 
+  // Preview Button
+  const btnPreviewArticle = document.getElementById('btnPreviewArticle');
+  if (btnPreviewArticle) {
+    btnPreviewArticle.addEventListener('click', () => {
+      updateMappingPreview();
+      showToast('Generated live domain-to-backlink preview!', 'info');
+    });
+  }
+
   // Article Publishing Form
   const articleForm = document.getElementById('articleForm');
   if (articleForm) {
     articleForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('articleTitle').value.trim();
-      const content = document.getElementById('articleContent').value.trim();
+      const content = document.getElementById('articleContent').value;
+      const article_mode = document.getElementById('articleModeSelect').value;
+      const spin_strategy = document.getElementById('spinStrategySelect').value;
+      const url_mode = document.getElementById('urlModeSelect').value;
+      const client_url_text = document.getElementById('clientUrlText').value;
+      const client_keyword_text = document.getElementById('clientKeywordText').value;
       const categories = document.getElementById('articleCategory').value.trim();
       const tags = document.getElementById('articleTags').value.trim();
       const featured_image = document.getElementById('articleFeaturedImage').value.trim();
       const canonical_url = document.getElementById('articleCanonical').value.trim();
       const status = document.getElementById('articlePostStatus').value;
-      const backlink_mode = document.getElementById('backlinkModeSelect').value;
 
-      const selectedSiteCbs = document.querySelectorAll('#targetSitesContainer .target-site-checkbox:checked');
-      const domain_ids = Array.from(selectedSiteCbs).map(cb => parseInt(cb.value, 10));
-
-      if (!domain_ids.length) {
-        showToast('Please select at least one connected target website', 'warning');
+      if (!state.orderedDomainIds.length) {
+        showToast('Please select at least one target domain', 'warning');
         return;
       }
 
-      let backlink_url = '';
-      let backlink_keyword = '';
-      let bulk_backlinks_text = '';
-
-      if (backlink_mode === 'single') {
-        backlink_url = document.getElementById('singleBacklinkUrl').value.trim();
-        backlink_keyword = document.getElementById('singleBacklinkKeyword').value.trim();
-        if (!backlink_url || !backlink_keyword) {
-          showToast('Please provide both backlink URL and anchor keyword', 'warning');
-          return;
-        }
-      } else if (backlink_mode === 'bulk') {
-        bulk_backlinks_text = document.getElementById('bulkBacklinkText').value.trim();
-        if (!bulk_backlinks_text) {
-          showToast('Please enter bulk URL and keyword pairs', 'warning');
-          return;
-        }
-      }
-
-      showToast('Publishing article to selected websites...', 'info');
+      showToast('Publishing article to selected ordered domains...', 'info');
 
       try {
         const res = await fetch('/api/articles/publish', {
@@ -433,16 +443,17 @@ function initEventHandlers() {
           body: JSON.stringify({
             title,
             content,
+            article_mode,
+            spin_strategy,
+            url_mode,
+            client_url_text,
+            client_keyword_text,
             categories,
             tags,
             featured_image,
             canonical_url,
             status,
-            domain_ids,
-            backlink_mode,
-            backlink_url,
-            backlink_keyword,
-            bulk_backlinks_text
+            domain_ids: state.orderedDomainIds
           })
         });
 
@@ -460,6 +471,9 @@ function initEventHandlers() {
           }
 
           articleForm.reset();
+          state.orderedDomainIds = [];
+          renderOrderedDomainList();
+          updateMappingPreview();
           loadPublishingHistory();
           loadActivityLogs();
         } else {
@@ -476,18 +490,16 @@ function initEventHandlers() {
   if (sidebarLinkForm) {
     sidebarLinkForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const url = document.getElementById('linkUrl').value.trim();
-      const anchor_text = document.getElementById('linkAnchor').value.trim();
-      const rel = document.getElementById('linkRel').value;
-      const target = document.getElementById('linkTarget').value;
       const campaign_name = document.getElementById('linkCampaign').value.trim();
       const widget_title = document.getElementById('linkPlacement').value.trim();
+      const rel = document.getElementById('sidebarLinkRel').value;
+      const target = document.getElementById('sidebarLinkTarget').value;
+      const url_mode = document.getElementById('sidebarUrlModeSelect').value;
+      const client_url_text = document.getElementById('sidebarClientUrlText').value;
+      const client_keyword_text = document.getElementById('sidebarClientKeywordText').value;
 
-      const selectedSiteCbs = document.querySelectorAll('#sidebarTargetSitesContainer .sidebar-target-checkbox:checked');
-      const domain_ids = Array.from(selectedSiteCbs).map(cb => parseInt(cb.value, 10));
-
-      if (!domain_ids.length) {
-        showToast('Please select at least one target website for sidebar links', 'warning');
+      if (!state.sidebarOrderedDomainIds.length) {
+        showToast('Please select at least one target domain for sidebar links', 'warning');
         return;
       }
 
@@ -498,13 +510,14 @@ function initEventHandlers() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            url,
-            anchor_text,
-            rel,
-            target,
             campaign_name,
             widget_title,
-            domain_ids
+            rel,
+            target,
+            url_mode,
+            client_url_text,
+            client_keyword_text,
+            domain_ids: state.sidebarOrderedDomainIds
           })
         });
 
@@ -522,6 +535,8 @@ function initEventHandlers() {
           }
 
           sidebarLinkForm.reset();
+          state.sidebarOrderedDomainIds = [];
+          renderSidebarOrderedDomainList();
           loadSidebarLinks();
           loadActivityLogs();
         } else {
@@ -563,7 +578,8 @@ async function loadDomains() {
       state.domains = await res.json();
       renderDashboardStats();
       renderDomainsTable();
-      renderTargetSitesList();
+      renderOrderedDomainList();
+      renderSidebarOrderedDomainList();
     }
   } catch (err) {
     console.error('Failed to load domains', err);
@@ -620,59 +636,188 @@ async function loadTasks() {
   }
 }
 
-async function updateBacklinkMappingSummary() {
-  const mode = document.getElementById('backlinkModeSelect').value;
-  const summaryBox = document.getElementById('backlinkMappingSummary');
-  if (!summaryBox) return;
+function renderOrderedDomainList() {
+  const container = document.getElementById('orderedDomainListContainer');
+  const badgeCount = document.getElementById('connectedSiteCountBadge');
 
-  const selectedCbs = document.querySelectorAll('#targetSitesContainer .target-site-checkbox:checked');
-  const selectedDomainIds = Array.from(selectedCbs).map(cb => parseInt(cb.value, 10));
+  if (badgeCount) {
+    const connected = state.domains.filter(d => d.status === 'connected').length;
+    badgeCount.textContent = connected;
+  }
 
-  if (mode === 'none' || !selectedDomainIds.length) {
-    summaryBox.classList.add('hidden');
+  if (!container) return;
+
+  if (!state.domains.length) {
+    container.innerHTML = `<p class="empty-msg">No websites registered yet.</p>`;
     return;
   }
 
-  summaryBox.classList.remove('hidden');
+  // Render list of connected domains with ordering controls
+  const connectedDomains = state.domains.filter(d => d.status === 'connected');
 
-  if (mode === 'single') {
-    const url = document.getElementById('singleBacklinkUrl').value.trim() || '[No URL]';
-    const keyword = document.getElementById('singleBacklinkKeyword').value.trim() || '[No Keyword]';
+  container.innerHTML = connectedDomains.map(d => {
+    const isSelected = state.orderedDomainIds.includes(d.id);
+    const orderIdx = isSelected ? state.orderedDomainIds.indexOf(d.id) + 1 : null;
 
-    summaryBox.innerHTML = `
-      <strong>Single Mode Mapping:</strong> Applying backlink <code>&lt;a href="${escapeHtml(url)}"&gt;${escapeHtml(keyword)}&lt;/a&gt;</code> to all ${selectedDomainIds.length} selected target website(s).
+    return `
+      <div class="ordered-domain-item">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" value="${d.id}" ${isSelected ? 'checked' : ''} onchange="toggleOrderDomain(${d.id}, this.checked)">
+          ${orderIdx ? `<span class="domain-order-badge">#${orderIdx}</span>` : ''}
+          <strong style="font-size:0.85rem;">${escapeHtml(d.domain)}</strong>
+        </div>
+        ${isSelected ? `
+          <div class="reorder-btns">
+            <button class="btn-icon" onclick="moveDomainOrder(${d.id}, -1)" title="Move Up"><i class="fa-solid fa-chevron-up"></i></button>
+            <button class="btn-icon" onclick="moveDomainOrder(${d.id}, 1)" title="Move Down"><i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+        ` : ''}
+      </div>
     `;
-  } else if (mode === 'bulk') {
-    const text = document.getElementById('bulkBacklinkText').value.trim();
-    try {
-      const res = await fetch('/api/articles/validate-backlinks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bulkBacklinksText: text, selectedDomainIds })
-      });
-      const data = await res.json();
+  }).join('');
+}
 
-      if (!data.success) {
-        summaryBox.innerHTML = `
-          <div style="color:var(--danger); font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Bulk Backlink Configuration Error</div>
-          ${data.mismatchError ? `<div style="color:var(--danger); font-size:0.8rem;">${escapeHtml(data.mismatchError)}</div>` : ''}
-          ${data.invalidLines.length > 0 ? `<div style="color:var(--danger); font-size:0.8rem;">Invalid lines: ${data.invalidLines.map(l => `#${l.lineNumber}`).join(', ')}</div>` : ''}
-        `;
-      } else {
-        const mappingHtml = data.validPairs.map((pair, idx) => {
-          const domObj = state.domains.find(d => d.id === selectedDomainIds[idx]);
-          const domName = domObj ? domObj.domain : `Site ID ${selectedDomainIds[idx]}`;
-          return `<li><strong>${escapeHtml(domName)}</strong> &rarr; <code>${escapeHtml(pair.url)}</code> (${escapeHtml(pair.keyword)})</li>`;
-        }).join('');
-
-        summaryBox.innerHTML = `
-          <div style="color:var(--success); font-weight:600; margin-bottom:4px;"><i class="fa-solid fa-check"></i> Valid 1-to-1 Mapping (${data.validPairCount} Pair(s))</div>
-          <ol style="margin-left:20px; font-size:0.8rem;">${mappingHtml}</ol>
-        `;
-      }
-    } catch (err) {
-      summaryBox.innerHTML = `<div style="color:var(--danger);">Error validating backlinks</div>`;
+window.toggleOrderDomain = (id, checked) => {
+  if (checked) {
+    if (!state.orderedDomainIds.includes(id)) {
+      state.orderedDomainIds.push(id);
     }
+  } else {
+    state.orderedDomainIds = state.orderedDomainIds.filter(dId => dId !== id);
+  }
+  renderOrderedDomainList();
+  updateMappingPreview();
+};
+
+window.moveDomainOrder = (id, direction) => {
+  const index = state.orderedDomainIds.indexOf(id);
+  if (index === -1) return;
+
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= state.orderedDomainIds.length) return;
+
+  const temp = state.orderedDomainIds[index];
+  state.orderedDomainIds[index] = state.orderedDomainIds[newIndex];
+  state.orderedDomainIds[newIndex] = temp;
+
+  renderOrderedDomainList();
+  updateMappingPreview();
+};
+
+function renderSidebarOrderedDomainList() {
+  const container = document.getElementById('sidebarOrderedDomainContainer');
+  if (!container) return;
+
+  if (!state.domains.length) {
+    container.innerHTML = `<p class="empty-msg">No websites registered yet.</p>`;
+    return;
+  }
+
+  const connectedDomains = state.domains.filter(d => d.status === 'connected');
+
+  container.innerHTML = connectedDomains.map(d => {
+    const isSelected = state.sidebarOrderedDomainIds.includes(d.id);
+    const orderIdx = isSelected ? state.sidebarOrderedDomainIds.indexOf(d.id) + 1 : null;
+
+    return `
+      <div class="ordered-domain-item">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" value="${d.id}" ${isSelected ? 'checked' : ''} onchange="toggleSidebarOrderDomain(${d.id}, this.checked)">
+          ${orderIdx ? `<span class="domain-order-badge">#${orderIdx}</span>` : ''}
+          <strong style="font-size:0.85rem;">${escapeHtml(d.domain)}</strong>
+        </div>
+        ${isSelected ? `
+          <div class="reorder-btns">
+            <button class="btn-icon" onclick="moveSidebarDomainOrder(${d.id}, -1)"><i class="fa-solid fa-chevron-up"></i></button>
+            <button class="btn-icon" onclick="moveSidebarDomainOrder(${d.id}, 1)"><i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+window.toggleSidebarOrderDomain = (id, checked) => {
+  if (checked) {
+    if (!state.sidebarOrderedDomainIds.includes(id)) {
+      state.sidebarOrderedDomainIds.push(id);
+    }
+  } else {
+    state.sidebarOrderedDomainIds = state.sidebarOrderedDomainIds.filter(dId => dId !== id);
+  }
+  renderSidebarOrderedDomainList();
+};
+
+window.moveSidebarDomainOrder = (id, direction) => {
+  const index = state.sidebarOrderedDomainIds.indexOf(id);
+  if (index === -1) return;
+
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= state.sidebarOrderedDomainIds.length) return;
+
+  const temp = state.sidebarOrderedDomainIds[index];
+  state.sidebarOrderedDomainIds[index] = state.sidebarOrderedDomainIds[newIndex];
+  state.sidebarOrderedDomainIds[newIndex] = temp;
+
+  renderSidebarOrderedDomainList();
+};
+
+async function updateMappingPreview() {
+  const tbody = document.getElementById('mappingPreviewTableBody');
+  const alertBox = document.getElementById('urlKeywordValidationAlert');
+  if (!tbody) return;
+
+  if (!state.orderedDomainIds.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-muted text-center" style="padding:16px;">Select domains and enter URL/keywords to see the exact row-by-row mapping.</td></tr>`;
+    if (alertBox) alertBox.classList.add('hidden');
+    return;
+  }
+
+  const content = document.getElementById('articleContent').value;
+  const article_mode = document.getElementById('articleModeSelect').value;
+  const spin_strategy = document.getElementById('spinStrategySelect').value;
+  const url_mode = document.getElementById('urlModeSelect').value;
+  const client_url_text = document.getElementById('clientUrlText').value;
+  const client_keyword_text = document.getElementById('clientKeywordText').value;
+
+  try {
+    const res = await fetch('/api/articles/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        article_mode,
+        spin_strategy,
+        content: content || 'Sample article content',
+        url_mode,
+        client_url_text,
+        client_keyword_text,
+        domain_ids: state.orderedDomainIds
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      if (alertBox) {
+        alertBox.classList.remove('hidden');
+        alertBox.innerHTML = `<strong><i class="fa-solid fa-triangle-exclamation"></i> Validation Error:</strong> ${escapeHtml(data.error || 'Mapping check failed')} ${data.details ? `<br/>${data.details.map(d => escapeHtml(d)).join('<br/>')}` : ''}`;
+      }
+      tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center" style="padding:16px;">Row-level validation failed. Fix input errors above to view mapping.</td></tr>`;
+    } else {
+      if (alertBox) alertBox.classList.add('hidden');
+
+      tbody.innerHTML = data.mapping.map(m => `
+        <tr>
+          <td><span class="domain-order-badge">#${m.order}</span></td>
+          <td><strong>${escapeHtml(m.domain)}</strong></td>
+          <td><a href="${escapeHtml(m.client_url)}" target="_blank" style="color:var(--primary);">${escapeHtml(m.client_url)}</a></td>
+          <td><code>${escapeHtml(m.client_keyword)}</code></td>
+          <td><span class="text-muted" style="font-size:0.75rem;">${escapeHtml(m.content_preview)}</span></td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    console.error('Failed to update mapping preview', err);
   }
 }
 
@@ -896,34 +1041,6 @@ function renderDashboardStats() {
   const percentage = total > 0 ? Math.round((connected / total) * 100) : 100;
   document.getElementById('healthPercentage').textContent = `${percentage}%`;
   document.getElementById('healthFill').style.width = `${percentage}%`;
-}
-
-function renderTargetSitesList() {
-  const articleContainer = document.getElementById('targetSitesContainer');
-  const sidebarContainer = document.getElementById('sidebarTargetSitesContainer');
-  const badgeCount = document.getElementById('connectedSiteCountBadge');
-
-  const connectedDomains = state.domains.filter(d => d.status === 'connected');
-  if (badgeCount) badgeCount.textContent = connectedDomains.length;
-
-  const articleContentHtml = connectedDomains.length ? connectedDomains.map(d => `
-    <label class="target-site-item" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <input type="checkbox" value="${d.id}" class="target-site-checkbox" onchange="updateBacklinkMappingSummary()">
-      <span>${escapeHtml(d.domain)}</span>
-      <span class="badge badge-success" style="font-size:0.65rem;">connected</span>
-    </label>
-  `).join('') : '<p class="empty-msg">No connected websites available. Run connection ping on registered sites first.</p>';
-
-  const sidebarContentHtml = state.domains.length ? state.domains.map(d => `
-    <label class="target-site-item" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <input type="checkbox" value="${d.id}" class="sidebar-target-checkbox">
-      <span>${escapeHtml(d.domain)}</span>
-      <span class="badge ${d.status === 'connected' ? 'badge-success' : 'badge-warning'}" style="font-size:0.65rem;">${d.status}</span>
-    </label>
-  `).join('') : '<p class="empty-msg">No websites registered yet.</p>';
-
-  if (articleContainer) articleContainer.innerHTML = articleContentHtml;
-  if (sidebarContainer) sidebarContainer.innerHTML = sidebarContentHtml;
 }
 
 window.toggleSelectDomain = (id, checked) => {

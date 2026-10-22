@@ -244,7 +244,7 @@
           <div class="grid-2-col-wide-left">
             <div class="card">
               <div class="card-header">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Create & Publish Article</h3>
+                <h3><i class="fa-solid fa-pen-to-square"></i> Article & Backlink Publishing Engine</h3>
               </div>
               <div class="card-body">
                 <form id="articleForm">
@@ -253,9 +253,30 @@
                     <input type="text" id="articleTitle" class="form-input" placeholder="e.g. 10 Essential SEO Tips for 2025" required>
                   </div>
 
-                  <div class="form-group">
-                    <label for="articleContent">Content (HTML / Plain Text) <span class="required">*</span></label>
-                    <textarea id="articleContent" class="form-textarea" rows="10" placeholder="Write or paste HTML content here..." required></textarea>
+                  <!-- Article Mode & Content Box -->
+                  <div class="card p-3 mb-3" style="background:var(--surface-hover); border:1px solid var(--border);">
+                    <div class="grid-2-col mb-3">
+                      <div class="form-group">
+                        <label for="articleModeSelect">Article Content Mode</label>
+                        <select id="articleModeSelect" class="form-select">
+                          <option value="normal">Normal Article (Static HTML / Text)</option>
+                          <option value="spin">Spin Syntax Article ({option1|option2})</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group hidden" id="spinStrategyBox">
+                        <label for="spinStrategySelect">Spin Generation Strategy</label>
+                        <select id="spinStrategySelect" class="form-select">
+                          <option value="per_domain">One unique variation per domain</option>
+                          <option value="shared">One shared variation for all domains</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                      <label for="articleContent">Article Content <span class="required">*</span></label>
+                      <textarea id="articleContent" class="form-textarea" rows="10" placeholder="Write HTML content or {Spin|Syntax} article here..." required></textarea>
+                    </div>
                   </div>
 
                   <div class="grid-2-col">
@@ -280,49 +301,61 @@
                     </div>
                   </div>
 
-                  <!-- Backlink URLs & Keywords Panel -->
+                  <!-- Side-by-Side Multiline Client URL & Keyword Entry Box -->
                   <div class="card mt-3" style="background:var(--surface-hover); border-color:var(--border);">
                     <div class="card-header" style="padding:12px 16px;">
-                      <h4 style="font-size:0.95rem;"><i class="fa-solid fa-link"></i> Backlink URLs & Keywords Config</h4>
+                      <h4 style="font-size:0.95rem;"><i class="fa-solid fa-link"></i> Backlink URL & Keyword Entry</h4>
                     </div>
                     <div class="card-body" style="padding:16px;">
                       <div class="form-group mb-3">
-                        <label>Backlink Mode</label>
-                        <select id="backlinkModeSelect" class="form-select">
-                          <option value="none">No Backlink Insertion</option>
-                          <option value="single">Same URL & Keyword for All Selected Domains</option>
-                          <option value="bulk">Bulk URL & Keyword Pairs (1-to-1 Mapping)</option>
+                        <label for="urlModeSelect">URL & Keyword Assignment Mode</label>
+                        <select id="urlModeSelect" class="form-select">
+                          <option value="different">Different URL & Keyword for each domain (Line-by-line pairing)</option>
+                          <option value="same">Same URL & Keyword for all selected domains</option>
                         </select>
                       </div>
 
-                      <!-- Mode 1: Single Pair -->
-                      <div id="singleBacklinkBox" class="hidden">
-                        <div class="grid-2-col">
-                          <div class="form-group">
-                            <label for="singleBacklinkUrl">Target Client URL</label>
-                            <input type="text" id="singleBacklinkUrl" class="form-input" placeholder="https://client.com/landing">
-                          </div>
-                          <div class="form-group">
-                            <label for="singleBacklinkKeyword">Anchor Keyword</label>
-                            <input type="text" id="singleBacklinkKeyword" class="form-input" placeholder="e.g. Best SEO Services">
-                          </div>
+                      <div class="side-by-side-boxes grid-2-col mb-3">
+                        <div class="form-group mb-0">
+                          <label for="clientUrlText">Client URL (One URL per line)</label>
+                          <textarea id="clientUrlText" class="form-textarea font-mono" rows="6" placeholder="https://client.com/page-1&#10;https://client.com/page-2&#10;https://client.com/page-3"></textarea>
+                        </div>
+                        <div class="form-group mb-0">
+                          <label for="clientKeywordText">Client Keyword (One anchor text per line)</label>
+                          <textarea id="clientKeywordText" class="form-textarea font-mono" rows="6" placeholder="SEO Services&#10;Digital Marketing&#10;Backlink Strategy"></textarea>
                         </div>
                       </div>
 
-                      <!-- Mode 2: Bulk Pairs -->
-                      <div id="bulkBacklinkBox" class="hidden">
-                        <div class="form-group mb-2">
-                          <label for="bulkBacklinkText">Bulk Pairs (Format: <code>https://client.com/page | Anchor Keyword</code>)</label>
-                          <textarea id="bulkBacklinkText" class="form-textarea" rows="5" placeholder="https://client1.com/page | Anchor Keyword 1&#10;https://client2.com/page | Anchor Keyword 2"></textarea>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-secondary" id="btnValidateBulkBacklinks">
-                          <i class="fa-solid fa-check"></i> Validate & Map Pairs
-                        </button>
-                      </div>
-
-                      <!-- Mapping Breakdown Summary -->
-                      <div id="backlinkMappingSummary" class="mt-3 hidden" style="font-size:0.85rem; padding:10px; background:var(--surface); border-radius:var(--radius); border:1px solid var(--border);">
+                      <!-- Validation Errors Report -->
+                      <div id="urlKeywordValidationAlert" class="alert alert-danger hidden mb-3" style="font-size:0.85rem;">
                         <!-- Rendered via JS -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Live Mapping Preview Table -->
+                  <div class="card mt-3" style="background:var(--surface); border-color:var(--border);">
+                    <div class="card-header" style="padding:12px 16px;">
+                      <h4 style="font-size:0.9rem;"><i class="fa-solid fa-table-list"></i> Final Ordered Mapping Preview</h4>
+                    </div>
+                    <div class="card-body" style="padding:12px;">
+                      <div class="table-responsive">
+                        <table class="data-table" id="mappingPreviewTable" style="font-size:0.82rem;">
+                          <thead>
+                            <tr>
+                              <th width="50">Order</th>
+                              <th>Selected Target Domain</th>
+                              <th>Client URL</th>
+                              <th>Client Keyword</th>
+                              <th>Content Variation Preview</th>
+                            </tr>
+                          </thead>
+                          <tbody id="mappingPreviewTableBody">
+                            <tr>
+                              <td colspan="5" class="text-muted text-center" style="padding:16px;">Select domains and enter URL/keywords to see the exact row-by-row mapping.</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
@@ -337,30 +370,30 @@
 
                   <div class="form-actions mt-3">
                     <button type="button" class="btn btn-secondary" id="btnPreviewArticle">
-                      <i class="fa-solid fa-eye"></i> Preview Article
+                      <i class="fa-solid fa-eye"></i> Generate Live Preview
                     </button>
                     <button type="submit" class="btn btn-primary" id="btnPublishArticle">
-                      <i class="fa-solid fa-paper-plane"></i> Publish Article
+                      <i class="fa-solid fa-paper-plane"></i> Publish to Ordered Domains
                     </button>
                   </div>
                 </form>
               </div>
             </div>
 
-            <!-- Target Websites & Manual Paste Selector -->
+            <!-- Target Domain Selector & Reorder Tool -->
             <div class="card">
               <div class="card-header">
-                <h3><i class="fa-solid fa-bullseye"></i> Target Connected Websites</h3>
+                <h3><i class="fa-solid fa-arrow-down-short-wide"></i> Selected Target Domains</h3>
               </div>
               <div class="card-body">
                 <!-- Manual Domain Paste Box -->
-                <div class="manual-domain-match-box mb-4" style="padding:12px; background:var(--surface-hover); border-radius:var(--radius);">
+                <div class="manual-domain-match-box mb-3" style="padding:12px; background:var(--surface-hover); border-radius:var(--radius);">
                   <label for="manualDomainPasteText" style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">
                     <i class="fa-solid fa-paste"></i> Manual Domain Paste Box (One per line)
                   </label>
-                  <textarea id="manualDomainPasteText" class="form-textarea mb-2" rows="3" placeholder="site1.com&#10;site2.org"></textarea>
+                  <textarea id="manualDomainPasteText" class="form-textarea mb-2 font-mono" rows="3" placeholder="site1.com&#10;site2.org"></textarea>
                   <button type="button" class="btn btn-sm btn-secondary" id="btnMatchPastedDomains">
-                    <i class="fa-solid fa-filter"></i> Match & Select Connected Domains
+                    <i class="fa-solid fa-filter"></i> Resolve & Order Domains
                   </button>
 
                   <div id="manualMatchStatusReport" class="mt-2 hidden" style="font-size:0.8rem;">
@@ -372,8 +405,8 @@
                   <div class="target-selector-header" style="margin-bottom:10px;">
                     <label style="font-weight:600; font-size:0.85rem;"><input type="checkbox" id="selectAllTargetSites"> Select All Connected Sites (<span id="connectedSiteCountBadge">0</span>)</label>
                   </div>
-                  <div class="target-sites-list" id="targetSitesContainer" style="max-height:240px; overflow-y:auto;">
-                    <p class="empty-msg">No connected websites available. Add and verify websites in Domains panel first.</p>
+                  <div class="ordered-domain-list" id="orderedDomainListContainer" style="max-height:320px; overflow-y:auto;">
+                    <!-- Interactive ordered domain list rendered via JS -->
                   </div>
                 </div>
 
@@ -393,40 +426,10 @@
           <div class="grid-2-col-wide-left">
             <div class="card">
               <div class="card-header">
-                <h3><i class="fa-solid fa-link"></i> Configure Sidebar Link</h3>
+                <h3><i class="fa-solid fa-link"></i> Sidebar Link Deployment Engine</h3>
               </div>
               <div class="card-body">
                 <form id="sidebarLinkForm">
-                  <div class="form-group">
-                    <label for="linkUrl">Destination URL <span class="required">*</span></label>
-                    <input type="url" id="linkUrl" class="form-input" placeholder="https://targetwebsite.com/landing-page" required>
-                  </div>
-
-                  <div class="form-group">
-                    <label for="linkAnchor">Anchor Text <span class="required">*</span></label>
-                    <input type="text" id="linkAnchor" class="form-input" placeholder="e.g. Best SEO Tools" required>
-                  </div>
-
-                  <div class="grid-2-col">
-                    <div class="form-group">
-                      <label for="linkRel">HTML Rel Attribute</label>
-                      <select id="linkRel" class="form-select">
-                        <option value="dofollow">dofollow (Standard link)</option>
-                        <option value="nofollow">nofollow</option>
-                        <option value="sponsored">sponsored</option>
-                        <option value="ugc">ugc</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group">
-                      <label for="linkTarget">Target Attribute</label>
-                      <select id="linkTarget" class="form-select">
-                        <option value="_blank">_blank (Open in new tab)</option>
-                        <option value="_self">_self (Same window)</option>
-                      </select>
-                    </div>
-                  </div>
-
                   <div class="grid-2-col">
                     <div class="form-group">
                       <label for="linkCampaign">Campaign Name</label>
@@ -434,31 +437,79 @@
                     </div>
 
                     <div class="form-group">
-                      <label for="linkPlacement">Widget Title / Header</label>
-                      <input type="text" id="linkPlacement" class="form-input" placeholder="e.g. Recommended Resources">
+                      <label for="linkPlacement">Widget Header / Title</label>
+                      <input type="text" id="linkPlacement" class="form-input" placeholder="e.g. Recommended Links">
                     </div>
                   </div>
 
-                  <div class="form-actions">
+                  <div class="grid-2-col">
+                    <div class="form-group">
+                      <label for="sidebarLinkRel">HTML Rel Attribute</label>
+                      <select id="sidebarLinkRel" class="form-select">
+                        <option value="dofollow">dofollow</option>
+                        <option value="nofollow">nofollow</option>
+                        <option value="sponsored">sponsored</option>
+                        <option value="ugc">ugc</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="sidebarLinkTarget">Target Attribute</label>
+                      <select id="sidebarLinkTarget" class="form-select">
+                        <option value="_blank">_blank (New Tab)</option>
+                        <option value="_self">_self (Same Window)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Side-by-Side URL & Keyword Box for Sidebar Links -->
+                  <div class="card mt-2" style="background:var(--surface-hover); border-color:var(--border);">
+                    <div class="card-header" style="padding:12px 16px;">
+                      <h4 style="font-size:0.9rem;"><i class="fa-solid fa-list-check"></i> Sidebar URL & Keyword Entry</h4>
+                    </div>
+                    <div class="card-body" style="padding:16px;">
+                      <div class="form-group mb-3">
+                        <label for="sidebarUrlModeSelect">URL & Keyword Mode</label>
+                        <select id="sidebarUrlModeSelect" class="form-select">
+                          <option value="different">Different URL & Keyword for each domain (Line-by-line pairing)</option>
+                          <option value="same">Same URL & Keyword for all selected domains</option>
+                        </select>
+                      </div>
+
+                      <div class="side-by-side-boxes grid-2-col mb-2">
+                        <div class="form-group mb-0">
+                          <label for="sidebarClientUrlText">Destination URL (One per line)</label>
+                          <textarea id="sidebarClientUrlText" class="form-textarea font-mono" rows="5" placeholder="https://client.com/link-1&#10;https://client.com/link-2"></textarea>
+                        </div>
+                        <div class="form-group mb-0">
+                          <label for="sidebarClientKeywordText">Anchor Text (One per line)</label>
+                          <textarea id="sidebarClientKeywordText" class="form-textarea font-mono" rows="5" placeholder="Anchor Keyword 1&#10;Anchor Keyword 2"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-actions mt-3">
                     <button type="submit" class="btn btn-primary" id="btnDeploySidebarLink">
-                      <i class="fa-solid fa-bolt"></i> Deploy Link to Target Websites
+                      <i class="fa-solid fa-bolt"></i> Deploy Links to Ordered Domains
                     </button>
                   </div>
                 </form>
               </div>
             </div>
 
+            <!-- Sidebar Selected Domains -->
             <div class="card">
               <div class="card-header">
-                <h3><i class="fa-solid fa-layer-group"></i> Target Sites Selection</h3>
+                <h3><i class="fa-solid fa-layer-group"></i> Selected Domains for Sidebar</h3>
               </div>
               <div class="card-body">
                 <div class="target-sites-selector">
-                  <div class="target-selector-header">
-                    <label><input type="checkbox" id="selectAllSidebarTargetSites"> Select All Connected Sites</label>
+                  <div class="target-selector-header mb-2">
+                    <label style="font-weight:600; font-size:0.85rem;"><input type="checkbox" id="selectAllSidebarTargetSites"> Select All Connected Sites</label>
                   </div>
-                  <div class="target-sites-list" id="sidebarTargetSitesContainer">
-                    <p class="empty-msg">No connected websites available.</p>
+                  <div class="ordered-domain-list" id="sidebarOrderedDomainContainer" style="max-height:280px; overflow-y:auto;">
+                    <!-- Rendered via JS -->
                   </div>
                 </div>
               </div>
@@ -475,8 +526,8 @@
                   <thead>
                     <tr>
                       <th>Campaign</th>
-                      <th>Anchor Text</th>
-                      <th>Target URL</th>
+                      <th>Primary Anchor</th>
+                      <th>Primary URL</th>
                       <th>Rel</th>
                       <th>Target Sites</th>
                       <th>Status</th>
@@ -724,7 +775,7 @@
           <form id="bulkImportForm">
             <div class="form-group">
               <label for="bulkDomainList">Enter or Paste CSV / TSV Data <span class="required">*</span></label>
-              <textarea id="bulkDomainList" class="form-textarea" rows="8" placeholder="domain,client_url,keyword,label,notes&#10;site1.com,https://client1.com,SEO Keyword 1,Batch A,Note 1&#10;site2.org,https://client2.com,SEO Keyword 2,Batch A,Note 2" required></textarea>
+              <textarea id="bulkDomainList" class="form-textarea font-mono" rows="8" placeholder="domain,client_url,keyword,label,notes&#10;site1.com,https://client1.com,SEO Keyword 1,Batch A,Note 1&#10;site2.org,https://client2.com,SEO Keyword 2,Batch A,Note 2" required></textarea>
             </div>
             <div class="form-group">
               <label for="bulkDomainDefaultLabel">Default Label for Plain Lines (Optional)</label>

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db');
 const { sendWpRequest } = require('../utils/wpClient');
+const { parseSideBySideInput } = require('../utils/backlinkMatcher');
 
 // GET /api/sidebar-links — List active sidebar link configurations
 router.get('/', (req, res) => {
@@ -19,36 +20,150 @@ router.get('/', (req, res) => {
   });
 });
 
-// POST /api/sidebar-links/deploy — Create & Deploy Sidebar Link via real WP API
-router.post('/deploy', async (req, res) => {
-  const { campaign_name, url, anchor_text, rel, target, widget_title, domain_ids } = req.body;
+// GET /api/sidebar-links/history — Get detailed deployment history
+router.get('/history', (req, res) => {
+  const db = getDb();
+  const sql = `
+    SELECT sld.*, sl.campaign_name, sl.widget_title, sl.rel, sl.target, d.domain
+    FROM sidebar_link_deployments sld
+    JOIN sidebar_links sl ON sld.link_id = sl.id
+    JOIN domains d ON sld.domain_id = d.id
+    ORDER BY sld.updated_at DESC
+  `;
+  db.all(sql, (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch sidebar link deployment history' });
+    res.json(rows);
+  });
+});
 
-  if (!url || !anchor_text || !Array.isArray(domain_ids) || !domain_ids.length) {
-    return res.status(400).json({ error: 'Destination URL, anchor text, and at least one target site required' });
+// POST /api/sidebar-links/preview — Generate domain-to-sidebar-link mapping preview
+router.post('/preview', (req, res) => {
+  const { url_mode, client_url_text, client_keyword_text, domain_ids } = req.body;
+
+  if (!Array.isArray(domain_ids) || !domain_ids.length) {
+    return res.status(400).json({ error: 'Selected domains are required' });
   }
 
   const db = getDb();
+  const placeholders = domain_ids.map(() => '?').join(',');
 
-  db.run(
-    `INSERT INTO sidebar_links (campaign_name, url, anchor_text, rel, target, widget_title) VALUES (?, ?, ?, ?, ?, ?)`,
-    [campaign_name || null, url.trim(), anchor_text.trim(), rel || 'dofollow', target || '_blank', widget_title || 'Sponsored Links'],
-    function (err) {
-      if (err) return res.status(500).json({ error: 'Failed to save sidebar link configuration' });
+  db.all(`SELECT id, domain, status FROM domains WHERE id IN (${placeholders})`, domain_ids, (err, domains) => {
+    if (err || !domains.length) {
+      return res.status(400).json({ error: 'No valid target domains found' });
+    }
 
-      const linkId = this.lastID;
-      const placeholders = domain_ids.map(() => '?').join(',');
+    const domainMap = new Map(domains.map(d => [d.id, d]));
+    const orderedDomains = domain_ids.map(id => domainMap.get(id)).filter(Boolean);
 
-      db.all(`SELECT * FROM domains WHERE id IN (${placeholders})`, domain_ids, async (err, domains) => {
-        if (err || !domains.length) {
-          return res.status(400).json({ error: 'No valid target domains found' });
-        }
+    const disconnected = orderedDomains.filter(d => d.status !== 'connected');
+    if (disconnected.length > 0) {
+      return res.status(400).json({
+        error: `Domain ${disconnected[0].domain} is not connected. All target domains must be connected before deploying sidebar links.`,
+        disconnected: disconnected.map(d => d.domain)
+      });
+    }
 
+    const urlCheck = parseSideBySideInput(client_url_text, client_keyword_text, orderedDomains.length, url_mode || 'different');
+    if (!urlCheck.valid) {
+      return res.status(400).json({
+        error: 'URL/Keyword validation failed',
+        details: urlCheck.errors
+      });
+    }
+
+    const mapping = orderedDomains.map((dom, idx) => {
+      const pair = urlCheck.pairs[idx] || { url: '', keyword: '' };
+      return {
+        order: idx + 1,
+        domain_id: dom.id,
+        domain: dom.domain,
+        client_url: pair.url,
+        client_keyword: pair.keyword
+      };
+    });
+
+    res.json({
+      success: true,
+      ordered_count: mapping.length,
+      mapping
+    });
+  });
+});
+
+// POST /api/sidebar-links/deploy — Create & Deploy Sidebar Link via real WP API in exact domain order
+router.post('/deploy', async (req, res) => {
+  const {
+    campaign_name,
+    url_mode,
+    client_url_text,
+    client_keyword_text,
+    rel,
+    target,
+    widget_title,
+    domain_ids
+  } = req.body;
+
+  if (!Array.isArray(domain_ids) || !domain_ids.length) {
+    return res.status(400).json({ error: 'At least one target site required' });
+  }
+
+  const db = getDb();
+  const placeholders = domain_ids.map(() => '?').join(',');
+
+  db.all(`SELECT * FROM domains WHERE id IN (${placeholders})`, domain_ids, async (err, domains) => {
+    if (err || !domains.length) {
+      return res.status(400).json({ error: 'No valid target domains found' });
+    }
+
+    // Preserve exact user-specified domain ordering
+    const domainMap = new Map(domains.map(d => [d.id, d]));
+    const orderedDomains = domain_ids.map(id => domainMap.get(id)).filter(Boolean);
+
+    if (orderedDomains.length !== domain_ids.length) {
+      return res.status(400).json({ error: 'One or more target domains could not be found' });
+    }
+
+    const disconnected = orderedDomains.filter(d => d.status !== 'connected');
+    if (disconnected.length > 0) {
+      return res.status(400).json({
+        error: `Cannot deploy: Domain "${disconnected[0].domain}" is not connected. All selected target domains must be connected.`
+      });
+    }
+
+    const urlCheck = parseSideBySideInput(client_url_text, client_keyword_text, orderedDomains.length, url_mode || 'different');
+    if (!urlCheck.valid) {
+      return res.status(400).json({
+        error: `Validation failed: ${urlCheck.errors.join(' ')}`
+      });
+    }
+
+    const primaryUrl = urlCheck.pairs[0].url;
+    const primaryKeyword = urlCheck.pairs[0].keyword;
+
+    db.run(
+      `INSERT INTO sidebar_links (campaign_name, url, anchor_text, url_mode, rel, target, widget_title) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        campaign_name || null,
+        primaryUrl,
+        primaryKeyword,
+        url_mode || 'different',
+        rel || 'dofollow',
+        target || '_blank',
+        widget_title || 'Sponsored Links'
+      ],
+      async function (err) {
+        if (err) return res.status(500).json({ error: 'Failed to save sidebar link configuration' });
+
+        const linkId = this.lastID;
         const deploymentResults = [];
 
-        for (const domain of domains) {
+        for (let idx = 0; idx < orderedDomains.length; idx++) {
+          const domain = orderedDomains[idx];
+          const pair = urlCheck.pairs[idx];
+
           const payload = {
-            url: url.trim(),
-            anchor_text: anchor_text.trim(),
+            url: pair.url,
+            anchor_text: pair.keyword,
             rel: rel || 'dofollow',
             target: target || '_blank',
             widget_title: widget_title || 'Sponsored Links'
@@ -58,24 +173,32 @@ router.post('/deploy', async (req, res) => {
 
           if (wpRes.success && wpRes.data && wpRes.data.success) {
             db.run(
-              `INSERT OR REPLACE INTO sidebar_link_deployments (link_id, domain_id, status, error_message, updated_at) VALUES (?, ?, 'deployed', NULL, CURRENT_TIMESTAMP)`,
-              [linkId, domain.id]
+              `INSERT OR REPLACE INTO sidebar_link_deployments (link_id, domain_id, assigned_url, assigned_keyword, status, error_message, updated_at)
+               VALUES (?, ?, ?, ?, 'deployed', NULL, CURRENT_TIMESTAMP)`,
+              [linkId, domain.id, pair.url, pair.keyword]
             );
 
             deploymentResults.push({
+              order: idx + 1,
               domain: domain.domain,
+              client_url: pair.url,
+              client_keyword: pair.keyword,
               status: 'deployed'
             });
           } else {
             const errorMsg = wpRes.error || (wpRes.data && wpRes.data.message) || 'Deployment failed';
 
             db.run(
-              `INSERT OR REPLACE INTO sidebar_link_deployments (link_id, domain_id, status, error_message, updated_at) VALUES (?, ?, 'failed', ?, CURRENT_TIMESTAMP)`,
-              [linkId, domain.id, errorMsg]
+              `INSERT OR REPLACE INTO sidebar_link_deployments (link_id, domain_id, assigned_url, assigned_keyword, status, error_message, updated_at)
+               VALUES (?, ?, ?, ?, 'failed', ?, CURRENT_TIMESTAMP)`,
+              [linkId, domain.id, pair.url, pair.keyword, errorMsg]
             );
 
             deploymentResults.push({
+              order: idx + 1,
               domain: domain.domain,
+              client_url: pair.url,
+              client_keyword: pair.keyword,
               status: 'failed',
               error: errorMsg
             });
@@ -87,7 +210,7 @@ router.post('/deploy', async (req, res) => {
 
         db.run(
           `INSERT INTO activity_logs (action, status, details) VALUES (?, ?, ?)`,
-          ['deploy_sidebar_link', failedCount > 0 ? 'warning' : 'success', `Deployed sidebar link "${anchor_text}" to ${successCount} site(s). Failed on ${failedCount} site(s).`]
+          ['deploy_sidebar_link', failedCount > 0 ? 'warning' : 'success', `Deployed sidebar links to ${successCount} site(s). Failed on ${failedCount} site(s).`]
         );
 
         res.json({
@@ -95,9 +218,9 @@ router.post('/deploy', async (req, res) => {
           linkId,
           deploymentResults
         });
-      });
-    }
-  );
+      }
+    );
+  });
 });
 
 // DELETE /api/sidebar-links/:id — Delete / Remove deployed sidebar link

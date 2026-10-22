@@ -12,6 +12,10 @@ describe('Article Publishing Engine & API', () => {
     const res2 = await request(app).post('/api/domains').send({ domain: 'site-beta.com' });
     domain1Id = res1.body.id;
     domain2Id = res2.body.id;
+
+    // Set status to connected for tests
+    const db = getDb();
+    await new Promise(r => db.run("UPDATE domains SET status = 'connected' WHERE id IN (?, ?)", [domain1Id, domain2Id], r));
   });
 
   afterAll((done) => {
@@ -37,6 +41,9 @@ describe('Article Publishing Engine & API', () => {
       categories: 'SEO, Marketing',
       tags: 'pbn, backlinks',
       status: 'publish',
+      url_mode: 'same',
+      client_url_text: 'https://client.com',
+      client_keyword_text: 'SEO Keyword',
       domain_ids: [domain1Id, domain2Id]
     };
 

@@ -10,6 +10,9 @@ describe('Sidebar Link Management API', () => {
     await initDb();
     const domainRes = await request(app).post('/api/domains').send({ domain: 'sidebar-test-site.com' });
     domainId = domainRes.body.id;
+
+    const db = getDb();
+    await new Promise(r => db.run("UPDATE domains SET status = 'connected' WHERE id = ?", [domainId], r));
   });
 
   afterAll((done) => {
@@ -31,8 +34,9 @@ describe('Sidebar Link Management API', () => {
 
     const payload = {
       campaign_name: 'Spring SEO Campaign',
-      url: 'https://myservice.com/landing',
-      anchor_text: 'Top Rated Services',
+      url_mode: 'same',
+      client_url_text: 'https://myservice.com/landing',
+      client_keyword_text: 'Top Rated Services',
       rel: 'nofollow',
       target: '_blank',
       widget_title: 'Featured Resources',

@@ -12,6 +12,9 @@ describe('WordPress Client Connectivity & Mocked API Tests', () => {
     const res2 = await request(app).post('/api/domains').send({ domain: 'http://wp-site2.test' });
     domain1Id = res1.body.id;
     domain2Id = res2.body.id;
+
+    const db = getDb();
+    await new Promise(r => db.run("UPDATE domains SET status = 'connected' WHERE id IN (?, ?)", [domain1Id, domain2Id], r));
   });
 
   afterAll((done) => {
@@ -59,6 +62,10 @@ describe('WordPress Client Connectivity & Mocked API Tests', () => {
     expect(res.statusCode).toEqual(400);
     expect(res.body.status).toEqual('disconnected');
     expect(res.body.error).toContain('Invalid HMAC signature');
+
+    // Restore status to connected for remaining tests
+    const db = getDb();
+    await new Promise(r => db.run("UPDATE domains SET status = 'connected' WHERE id = ?", [domain1Id], r));
   });
 
   it('POST /api/articles/publish should handle partial site success and failure', async () => {
@@ -83,6 +90,9 @@ describe('WordPress Client Connectivity & Mocked API Tests', () => {
       .send({
         title: 'Multi-Site Test Article',
         content: '<p>Content testing</p>',
+        url_mode: 'same',
+        client_url_text: 'https://client.com',
+        client_keyword_text: 'Keyword',
         domain_ids: [domain1Id, domain2Id]
       });
 
@@ -114,8 +124,9 @@ describe('WordPress Client Connectivity & Mocked API Tests', () => {
     const res = await request(app)
       .post('/api/sidebar-links/deploy')
       .send({
-        url: 'https://myservice.com',
-        anchor_text: 'Best Service',
+        url_mode: 'same',
+        client_url_text: 'https://myservice.com',
+        client_keyword_text: 'Best Service',
         domain_ids: [domain1Id, domain2Id]
       });
 

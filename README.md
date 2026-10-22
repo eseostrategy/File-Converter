@@ -8,32 +8,41 @@ PBN Commander is a centralized WordPress website and Private Blog Network (PBN) 
 
 - **Modern SaaS Responsive UI:** Responsive single-page application built with HTML5, CSS3, JavaScript (ES6+), FontAwesome, and Inter typography.
 - **Dark Mode & Light Mode:** Toggleable theme with `localStorage` state persistence.
-- **Domain & Client Asset Management:** Single domain registration, editing, and CSV/TSV bulk import supporting client URLs (`client_url`) and target keywords (`keyword`). Includes domain URL normalization (`https://`), SSRF protection against internal IP addresses, duplicate validation, custom tags/labels, and internal notes.
+- **Domain Selection & Ordering Engine:** Select connected target domains from checkboxes or paste raw domain lists. Resolves pasted domain text against registered connected domains with status badges (*Connected*, *Disconnected*, *Unknown*, *Invalid*), preserves explicit user domain order, and provides up/down reordering controls.
+- **Side-by-Side Multiline Client URL & Keyword Entry:** Two side-by-side multiline text boxes modeled on user specifications ("Client URL" and "Client Keyword"). Supports:
+  - *Different URL & Keyword for each domain:* Line 1 URL pairs with Line 1 Keyword, Line 2 with Line 2, mapped 1-to-1 to Position 1, Position 2 of the ordered domain list.
+  - *Same URL & Keyword for all domains:* One URL and anchor keyword applied across all target domains.
+- **Normal & Spin Syntax Article Engine:**
+  - *Normal Article Mode:* Static HTML or plain text content publishing with live preview.
+  - *Spin Syntax Mode:* Supports `{option1|option2}` syntax with nested choice support and fallback handling. Includes two explicit variation strategies: **One unique variation per domain** vs **One shared variation**.
+- **Live Final Ordered Mapping Preview:** Real-time preview table displaying `Order | Target Domain | Client URL | Client Keyword | Content Preview` prior to submission.
 - **2-Step Bulk Import Workflow:** Preview parsed CSV/TSV data with row-level status validation (Valid, Duplicate, Invalid) prior to committing valid rows to the database.
 - **Custom Client WordPress Plugin:** Custom WordPress plugin connector (`wordpress-plugin/pbn-commander-client/pbn-commander-client.php`) supporting encrypted HMAC SHA-256 signature authorization, 5-minute replay window protection, REST endpoints (`/ping`, `/publish`, `/sidebar-links`), and custom sidebar link widgets.
 - **Real WordPress Connectivity:** Actual HTTP API requests dispatched with HMAC signature headers to WordPress endpoints (`/wp-json/pbn-commander/v1/ping`, `/publish`, `/sidebar-links`).
-- **Article Publisher & Backlink Engine:** Rich HTML content publishing, post preview, target site selection, post status (`publish` or `draft`), categories, tags, featured image URL, canonical URL, and per-site publishing history logs.
-- **Backlink Insertion Modes:** Supports inserting backlinks into published article content via:
-  - *Same URL & Keyword for All:* A single client landing page URL and anchor keyword appended across all target sites.
-  - *Bulk Pairs (1-to-1 Mapping):* Paste bulk URL and keyword pairs (`https://client.com/page | Anchor Text`) with deterministic 1-to-1 mapping across selected target domains.
-- **Manual Domain Paste Matching:** Fast domain matching sidebar tool that parses pasted raw domain lists, matches them against registered connected domains in the SQLite database, reports connection status badges (*Matched Connected*, *Matched Disconnected*, *Unknown Domains*), and automatically selects matched connected target sites.
-- **Sidebar Link Management:** Centralized control over sidebar widget links, custom anchor text, target URLs, `rel` attributes (`dofollow`, `nofollow`, `sponsored`, `ugc`), target attributes (`_blank`, `_self`), and campaign names.
+- **Sidebar Link Management Engine:** Apply the same ordered domain selection and side-by-side URL/keyword pairing to sidebar widget link deployments across target sites.
 - **Activity & Security Audit Log:** Complete event audit trail recording site registration, connection checks, article publishing, sidebar deployments, and security events.
 - **Security Hardening:** Express Rate Limiting, Helmet HTTP security headers, input sanitization, timing-safe HMAC signature verification, SSRF blocking of loopback/private IPs, and secure site key masking.
 
 ---
 
-## Article Publisher & Backlink Features
+## Article Publishing & Sidebar Link Workflows
 
-### 1. Backlink Insertion Modes
-- **Same URL & Keyword for All:** Enter one target URL and anchor keyword. Every selected site receives the same backlink appended safely to the post body using WordPress `wp_kses_post`.
-- **Bulk Pairs (1-to-1 Mapping):** Paste bulk backlink lines formatted as `Target URL | Anchor Keyword`. The system validates all URLs and matches line 1 to Site 1, line 2 to Site 2, and so on.
+### 1. Selected Target Domains & Ordering
+1. Select target websites via checkboxes or paste domain names in the **Manual Domain Paste Box** (one domain per line).
+2. Click **Resolve & Order Domains**. The system matches pasted lines against registered connected domains in SQLite, highlights status badges (*Connected*, *Disconnected*, *Unknown*, *Invalid*), and checks the matched connected sites.
+3. Adjust domain priority using the **Up** and **Down** arrow buttons. This exact order determines how URLs, keywords, and spin syntax variations are assigned.
 
-### 2. Manual Domain Paste Box
-Located on the right sidebar of the Article Publisher:
-1. Paste a list of domain names (one per line).
-2. Click **Match & Select Connected Domains**.
-3. The dashboard parses and normalizes the domains, matches them against connected sites in SQLite, reports status badges, and automatically checks the matching connected sites for publishing.
+### 2. Side-by-Side URL & Keyword Entry
+1. In the **Backlink URL & Keyword Entry** section, choose your assignment mode:
+   - **Different URL & Keyword for each domain:** Paste one Client URL per line in the left box and one Client Keyword per line in the right box. Line N pairs with Line N for Domain N.
+   - **Same URL & Keyword for all selected domains:** Enter one URL and one keyword applied to all target domains.
+2. The **Final Ordered Mapping Preview** table updates in real time to show the exact row-by-row mapping (`Order | Target Domain | Client URL | Client Keyword | Content Preview`).
+
+### 3. Normal & Spin Syntax Article Modes
+- **Normal Article:** Paste or write static HTML content.
+- **Spin Syntax Article:** Write or paste HTML containing `{option 1|option 2|option 3}` syntax.
+  - Choose **One unique variation per domain** to generate a distinct, deterministic variation seeded by domain name.
+  - Choose **One shared variation** to generate one variation and publish it to all selected target sites.
 
 ---
 
@@ -103,7 +112,7 @@ pbndomain2.org,client2.org,Backlink Strategy,Batch 1,Secondary blog
 Run unit, integration, and UI verification tests:
 
 ```bash
-# Run all backend unit, integration, and mocked WordPress connectivity tests
+# Run all 50 backend unit, integration, and mocked WordPress connectivity tests
 npm test
 
 # Run Playwright E2E visual UI screenshot/video tests

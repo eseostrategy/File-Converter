@@ -7,9 +7,26 @@ dotenv.config();
 const dbPath = process.env.DB_PATH || path.join(__dirname, '../pbn_commander.db');
 const db = new sqlite3.Database(dbPath);
 
-function initDb() {
+function runAsync(sql, params = []) {
+  return new Promise((resolve) => {
+    db.run(sql, params, function (err) {
+      resolve(err);
+    });
+  });
+}
+
+function getTableColumns(tableName) {
+  return new Promise((resolve) => {
+    db.all(`PRAGMA table_info(${tableName})`, (err, rows) => {
+      if (err || !rows) resolve([]);
+      else resolve(rows.map(r => r.name));
+    });
+  });
+}
+
+async function initDb() {
   return new Promise((resolve, reject) => {
-    db.serialize(() => {
+    db.serialize(async () => {
       // 1. Users Table
       db.run(`
         CREATE TABLE IF NOT EXISTS users (
@@ -39,18 +56,9 @@ function initDb() {
         )
       `);
 
-      // Safe migration for existing SQLite databases without erasing records
-      db.all(`PRAGMA table_info(domains)`, (err, columns) => {
-        if (!err && columns) {
-          const colNames = columns.map(c => c.name);
-          if (!colNames.includes('client_url')) {
-            db.run(`ALTER TABLE domains ADD COLUMN client_url TEXT`);
-          }
-          if (!colNames.includes('keyword')) {
-            db.run(`ALTER TABLE domains ADD COLUMN keyword TEXT`);
-          }
-        }
-      });
+      let cols = await getTableColumns('domains');
+      if (!cols.includes('client_url')) await runAsync(`ALTER TABLE domains ADD COLUMN client_url TEXT`);
+      if (!cols.includes('keyword')) await runAsync(`ALTER TABLE domains ADD COLUMN keyword TEXT`);
 
       // 3. Articles Table
       db.run(`
@@ -58,6 +66,9 @@ function initDb() {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           title TEXT NOT NULL,
           content TEXT NOT NULL,
+          article_mode TEXT DEFAULT 'normal',
+          spin_strategy TEXT DEFAULT 'per_domain',
+          url_mode TEXT DEFAULT 'different',
           categories TEXT,
           tags TEXT,
           featured_image TEXT,
@@ -67,12 +78,20 @@ function initDb() {
         )
       `);
 
+      cols = await getTableColumns('articles');
+      if (!cols.includes('article_mode')) await runAsync(`ALTER TABLE articles ADD COLUMN article_mode TEXT DEFAULT 'normal'`);
+      if (!cols.includes('spin_strategy')) await runAsync(`ALTER TABLE articles ADD COLUMN spin_strategy TEXT DEFAULT 'per_domain'`);
+      if (!cols.includes('url_mode')) await runAsync(`ALTER TABLE articles ADD COLUMN url_mode TEXT DEFAULT 'different'`);
+
       // 4. Publishing History Table
       db.run(`
         CREATE TABLE IF NOT EXISTS publishing_history (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           article_id INTEGER NOT NULL,
           domain_id INTEGER NOT NULL,
+          backlink_url TEXT,
+          backlink_keyword TEXT,
+          spun_content TEXT,
           remote_post_id INTEGER,
           remote_post_url TEXT,
           status TEXT NOT NULL,
@@ -83,6 +102,11 @@ function initDb() {
         )
       `);
 
+      cols = await getTableColumns('publishing_history');
+      if (!cols.includes('backlink_url')) await runAsync(`ALTER TABLE publishing_history ADD COLUMN backlink_url TEXT`);
+      if (!cols.includes('backlink_keyword')) await runAsync(`ALTER TABLE publishing_history ADD COLUMN backlink_keyword TEXT`);
+      if (!cols.includes('spun_content')) await runAsync(`ALTER TABLE publishing_history ADD COLUMN spun_content TEXT`);
+
       // 5. Sidebar Links Table
       db.run(`
         CREATE TABLE IF NOT EXISTS sidebar_links (
@@ -90,6 +114,7 @@ function initDb() {
           campaign_name TEXT,
           url TEXT NOT NULL,
           anchor_text TEXT NOT NULL,
+          url_mode TEXT DEFAULT 'different',
           rel TEXT DEFAULT 'dofollow',
           target TEXT DEFAULT '_blank',
           widget_title TEXT,
@@ -97,12 +122,17 @@ function initDb() {
         )
       `);
 
+      cols = await getTableColumns('sidebar_links');
+      if (!cols.includes('url_mode')) await runAsync(`ALTER TABLE sidebar_links ADD COLUMN url_mode TEXT DEFAULT 'different'`);
+
       // 6. Sidebar Link Deployments Table
       db.run(`
         CREATE TABLE IF NOT EXISTS sidebar_link_deployments (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           link_id INTEGER NOT NULL,
           domain_id INTEGER NOT NULL,
+          assigned_url TEXT,
+          assigned_keyword TEXT,
           status TEXT NOT NULL DEFAULT 'pending',
           error_message TEXT,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -111,6 +141,10 @@ function initDb() {
           UNIQUE(link_id, domain_id)
         )
       `);
+
+      cols = await getTableColumns('sidebar_link_deployments');
+      if (!cols.includes('assigned_url')) await runAsync(`ALTER TABLE sidebar_link_deployments ADD COLUMN assigned_url TEXT`);
+      if (!cols.includes('assigned_keyword')) await runAsync(`ALTER TABLE sidebar_link_deployments ADD COLUMN assigned_keyword TEXT`);
 
       // 7. Background Tasks Table
       db.run(`
