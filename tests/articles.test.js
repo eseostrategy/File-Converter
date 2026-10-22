@@ -4,6 +4,7 @@ const { initDb, getDb } = require('../src/db');
 
 describe('Article Publishing Engine & API', () => {
   let domain1Id, domain2Id;
+  const originalFetch = global.fetch;
 
   beforeAll(async () => {
     await initDb();
@@ -14,6 +15,7 @@ describe('Article Publishing Engine & API', () => {
   });
 
   afterAll((done) => {
+    global.fetch = originalFetch;
     const db = getDb();
     db.run("DELETE FROM domains", () => {
       db.run("DELETE FROM articles", () => {
@@ -23,6 +25,12 @@ describe('Article Publishing Engine & API', () => {
   });
 
   it('POST /api/articles/publish should publish article to selected websites and record history', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ success: true, post_id: 101, post_url: 'https://site-alpha.com/?p=101' }))
+    });
+
     const payload = {
       title: 'Top 10 SEO Strategies for 2025',
       content: '<p>Welcome to our comprehensive guide on SEO.</p><script>alert("xss")</script>',

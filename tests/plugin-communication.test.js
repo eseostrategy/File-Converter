@@ -4,11 +4,14 @@ const { initDb, getDb } = require('../src/db');
 const { generateHmacHeaders, verifyHmacRequest } = require('../src/utils/security');
 
 describe('WordPress Plugin Communication & Security Protocols', () => {
+  const originalFetch = global.fetch;
+
   beforeAll(async () => {
     await initDb();
   });
 
   afterEach((done) => {
+    global.fetch = originalFetch;
     const db = getDb();
     db.run("DELETE FROM domains", done);
   });
@@ -50,7 +53,13 @@ describe('WordPress Plugin Communication & Security Protocols', () => {
     expect(isValid).toBe(false);
   });
 
-  it('POST /api/domains/:id/ping should update domain status to connected', async () => {
+  it('POST /api/domains/:id/ping should update domain status to connected when WP returns success', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ success: true, message: 'Connection successful' }))
+    });
+
     const createRes = await request(app)
       .post('/api/domains')
       .send({ domain: 'wp-client-site.com', label: 'WP' });

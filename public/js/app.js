@@ -206,7 +206,15 @@ function initEventHandlers() {
 
         const data = await res.json();
         if (res.ok) {
-          showToast(`Published successfully to ${data.results.length} site(s)!`, 'success');
+          const successCount = data.results.filter(r => r.status === 'published').length;
+          const failCount = data.results.filter(r => r.status === 'failed').length;
+
+          if (failCount > 0) {
+            showToast(`Published to ${successCount} site(s). ${failCount} site(s) failed.`, 'warning');
+          } else {
+            showToast(`Published successfully to all ${successCount} site(s)!`, 'success');
+          }
+
           articleForm.reset();
           loadPublishingHistory();
           loadActivityLogs();
@@ -257,7 +265,15 @@ function initEventHandlers() {
 
         const data = await res.json();
         if (res.ok) {
-          showToast(`Deployed sidebar link to ${data.deploymentResults.length} site(s)!`, 'success');
+          const successCount = data.deploymentResults.filter(r => r.status === 'deployed').length;
+          const failCount = data.deploymentResults.filter(r => r.status === 'failed').length;
+
+          if (failCount > 0) {
+            showToast(`Sidebar link deployed to ${successCount} site(s). ${failCount} site(s) failed.`, 'warning');
+          } else {
+            showToast(`Sidebar link deployed to ${successCount} site(s)!`, 'success');
+          }
+
           sidebarLinkForm.reset();
           loadSidebarLinks();
           loadActivityLogs();
@@ -436,7 +452,7 @@ function renderActivityLogsTable() {
       <td>${new Date(log.created_at).toLocaleString()}</td>
       <td><strong>${escapeHtml(log.action)}</strong></td>
       <td>${escapeHtml(log.domain || 'Global')}</td>
-      <td><span class="badge ${log.status === 'success' ? 'badge-success' : 'badge-info'}">${escapeHtml(log.status)}</span></td>
+      <td><span class="badge ${log.status === 'success' ? 'badge-success' : log.status === 'warning' ? 'badge-warning' : 'badge-info'}">${escapeHtml(log.status)}</span></td>
       <td>${escapeHtml(log.details || '-')}</td>
     </tr>
   `).join('');
@@ -498,7 +514,7 @@ function renderSidebarLinksTable() {
       <td><a href="${escapeHtml(l.url)}" target="_blank" style="color:var(--primary);">${escapeHtml(l.url)}</a></td>
       <td><span class="badge badge-info">${escapeHtml(l.rel)}</span></td>
       <td>${l.deployed_count} / ${l.target_count} Sites</td>
-      <td><span class="badge badge-success">Active</span></td>
+      <td><span class="badge ${l.deployed_count > 0 ? 'badge-success' : 'badge-warning'}">${l.deployed_count > 0 ? 'Active' : 'Pending'}</span></td>
       <td>
         <button class="btn btn-sm btn-danger" onclick="deleteSidebarLink(${l.id})"><i class="fa-solid fa-trash"></i></button>
       </td>
@@ -535,7 +551,10 @@ function renderPublishingHistory() {
     <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:0.85rem;">
       <div style="font-weight:600;">${escapeHtml(h.article_title)}</div>
       <div style="color:var(--text-muted); font-size:0.75rem;">
-        Site: ${escapeHtml(h.domain)} | <a href="${escapeHtml(h.remote_post_url)}" target="_blank" style="color:var(--primary);">View Post</a>
+        Site: ${escapeHtml(h.domain)} |
+        ${h.status === 'published'
+          ? `<a href="${escapeHtml(h.remote_post_url)}" target="_blank" style="color:var(--primary);">View Post</a>`
+          : `<span style="color:var(--danger);">${escapeHtml(h.error_message || 'Publish Failed')}</span>`}
       </div>
     </div>
   `).join('');
@@ -572,9 +591,10 @@ function renderDomainsTable() {
       <td>
         <strong>${escapeHtml(d.domain)}</strong>
         ${d.notes ? `<div class="text-muted" style="font-size:0.75rem;">${escapeHtml(d.notes)}</div>` : ''}
+        ${d.last_error ? `<div style="color:var(--danger); font-size:0.75rem;"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(d.last_error)}</div>` : ''}
       </td>
       <td>
-        <span class="badge ${d.status === 'connected' ? 'badge-success' : 'badge-warning'}">
+        <span class="badge ${d.status === 'connected' ? 'badge-success' : d.status === 'disconnected' ? 'badge-danger' : 'badge-warning'}">
           ${d.status || 'pending'}
         </span>
       </td>
@@ -582,7 +602,8 @@ function renderDomainsTable() {
       <td>${d.last_check ? new Date(d.last_check).toLocaleString() : 'Never'}</td>
       <td>${d.last_sync ? new Date(d.last_sync).toLocaleString() : 'Never'}</td>
       <td>
-        <button class="btn btn-sm btn-secondary" onclick="viewSiteKey('${d.site_key}', '${escapeHtml(d.domain)}')"><i class="fa-solid fa-key"></i> Key</button>
+        <button class="btn btn-sm btn-secondary" onclick="viewSiteKey(${d.id})"><i class="fa-solid fa-key"></i> Key</button>
+        <button class="btn btn-sm btn-outline" onclick="pingSingleSite(${d.id})"><i class="fa-solid fa-plug"></i> Ping</button>
         <button class="btn btn-sm btn-danger" onclick="deleteSingleDomain(${d.id})"><i class="fa-solid fa-trash"></i></button>
       </td>
     </tr>
@@ -651,11 +672,36 @@ window.deleteSingleDomain = async (id) => {
   }
 };
 
+window.pingSingleSite = async (id) => {
+  showToast('Testing WordPress connection...', 'info');
+  try {
+    const res = await fetch(`/api/domains/${id}/ping`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Connection verified successfully!', 'success');
+    } else {
+      showToast(`Connection failed: ${data.error || 'Check plugin installation'}`, 'danger');
+    }
+    loadDomains();
+    loadActivityLogs();
+  } catch (err) {
+    showToast('Network error during connection check', 'danger');
+  }
+};
+
 async function triggerBatchConnectionCheck() {
   try {
     const res = await fetch('/api/domains/ping-all', { method: 'POST' });
+    const data = await res.json();
     if (res.ok) {
-      showToast('Connection check complete!', 'success');
+      const connectedCount = data.results ? data.results.filter(r => r.status === 'connected').length : 0;
+      const failedCount = data.results ? data.results.filter(r => r.status === 'disconnected').length : 0;
+
+      if (failedCount > 0) {
+        showToast(`Ping check: ${connectedCount} connected, ${failedCount} failed`, 'warning');
+      } else {
+        showToast(`All ${connectedCount} website(s) connected!`, 'success');
+      }
       loadDomains();
       loadActivityLogs();
     }
@@ -664,10 +710,20 @@ async function triggerBatchConnectionCheck() {
   }
 }
 
-window.viewSiteKey = (key, domain) => {
-  document.getElementById('siteKeyDomain').textContent = domain;
-  document.getElementById('siteKeyDisplay').value = key || 'No key generated yet';
-  document.getElementById('modalSiteKey').classList.remove('hidden');
+window.viewSiteKey = async (id) => {
+  try {
+    const res = await fetch(`/api/domains/${id}/key`);
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('siteKeyDomain').textContent = data.domain;
+      document.getElementById('siteKeyDisplay').value = data.site_key || 'No key generated';
+      document.getElementById('modalSiteKey').classList.remove('hidden');
+    } else {
+      showToast('Failed to retrieve site key', 'danger');
+    }
+  } catch (err) {
+    showToast('Network error retrieving site key', 'danger');
+  }
 };
 
 function showToast(message, type = 'info') {

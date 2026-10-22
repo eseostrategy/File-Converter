@@ -9,7 +9,7 @@
  */
 
 if (!defined('ABSPATH')) {
-    exit;
+    exit; // Exit if accessed directly
 }
 
 define('PBN_COMMANDER_VERSION', '1.0.0');
@@ -21,6 +21,7 @@ class PBNCommanderClient {
         add_action('admin_init', array($this, 'register_settings'));
         add_action('rest_api_init', array($this, 'register_rest_routes'));
         add_action('widgets_init', array($this, 'register_sidebar_widget'));
+        add_action('wp_head', array($this, 'output_canonical_url'));
     }
 
     public function add_admin_menu() {
@@ -145,11 +146,35 @@ class PBNCommanderClient {
         }
 
         if (!empty($params['categories'])) {
-            wp_set_post_categories($post_id, explode(',', $params['categories']));
+            $cat_names = array_map('trim', explode(',', $params['categories']));
+            $cat_ids = array();
+            foreach ($cat_names as $cat_name) {
+                if (empty($cat_name)) continue;
+                $term = get_term_by('name', $cat_name, 'category');
+                if ($term) {
+                    $cat_ids[] = $term->term_id;
+                } else {
+                    $new_cat = wp_insert_term($cat_name, 'category');
+                    if (!is_wp_error($new_cat)) {
+                        $cat_ids[] = $new_cat['term_id'];
+                    }
+                }
+            }
+            if (!empty($cat_ids)) {
+                wp_set_post_categories($post_id, $cat_ids);
+            }
         }
 
         if (!empty($params['tags'])) {
             wp_set_post_tags($post_id, $params['tags']);
+        }
+
+        if (!empty($params['canonical_url'])) {
+            update_post_meta($post_id, '_pbn_commander_canonical_url', esc_url_raw($params['canonical_url']));
+        }
+
+        if (!empty($params['featured_image'])) {
+            update_post_meta($post_id, '_pbn_commander_featured_image_url', esc_url_raw($params['featured_image']));
         }
 
         return rest_ensure_response(array(
@@ -190,6 +215,16 @@ class PBNCommanderClient {
 
     public function register_sidebar_widget() {
         register_widget('PBN_Commander_Widget');
+    }
+
+    public function output_canonical_url() {
+        if (is_single()) {
+            $post_id = get_the_ID();
+            $canonical_url = get_post_meta($post_id, '_pbn_commander_canonical_url', true);
+            if (!empty($canonical_url)) {
+                echo '<link rel="canonical" href="' . esc_url($canonical_url) . '" />' . "\n";
+            }
+        }
     }
 }
 

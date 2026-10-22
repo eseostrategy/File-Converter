@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db');
-const { generateHmacHeaders } = require('../utils/security');
+const { sendWpRequest } = require('../utils/wpClient');
 
 function sanitizeHtml(html) {
   if (!html) return '';
@@ -35,7 +35,7 @@ router.get('/history', (req, res) => {
   });
 });
 
-// POST /api/articles/publish — Publish article to selected target domains
+// POST /api/articles/publish — Publish article to selected target domains via real WP API
 router.post('/publish', async (req, res) => {
   const { title, content, categories, tags, featured_image, canonical_url, status, domain_ids } = req.body;
 
@@ -63,20 +63,21 @@ router.post('/publish', async (req, res) => {
         }
 
         for (const domain of domains) {
-          try {
-            const payload = {
-              title,
-              content: sanitizedContent,
-              status: postStatus,
-              categories,
-              tags,
-              featured_image,
-              canonical_url
-            };
+          const payload = {
+            title,
+            content: sanitizedContent,
+            status: postStatus,
+            categories,
+            tags,
+            featured_image,
+            canonical_url
+          };
 
-            const headers = generateHmacHeaders(payload, domain.site_key);
-            const remotePostId = Math.floor(Math.random() * 9000) + 1000;
-            const remotePostUrl = `${domain.domain}/?p=${remotePostId}`;
+          const wpRes = await sendWpRequest(domain.domain, '/publish', payload, domain.site_key);
+
+          if (wpRes.success && wpRes.data && wpRes.data.success) {
+            const remotePostId = wpRes.data.post_id;
+            const remotePostUrl = wpRes.data.post_url;
 
             db.run(
               `INSERT INTO publishing_history (article_id, domain_id, remote_post_id, remote_post_url, status) VALUES (?, ?, ?, ?, 'published')`,
@@ -88,24 +89,31 @@ router.post('/publish', async (req, res) => {
             results.push({
               domain: domain.domain,
               status: 'published',
+              remote_post_id: remotePostId,
               remote_post_url: remotePostUrl
             });
-          } catch (pubErr) {
+          } else {
+            const errorMsg = wpRes.error || (wpRes.data && wpRes.data.message) || 'Publishing failed';
+
             db.run(
               `INSERT INTO publishing_history (article_id, domain_id, status, error_message) VALUES (?, ?, 'failed', ?)`,
-              [articleId, domain.id, pubErr.message]
+              [articleId, domain.id, errorMsg]
             );
+
             results.push({
               domain: domain.domain,
               status: 'failed',
-              error: pubErr.message
+              error: errorMsg
             });
           }
         }
 
+        const successCount = results.filter(r => r.status === 'published').length;
+        const failedCount = results.filter(r => r.status === 'failed').length;
+
         db.run(
-          `INSERT INTO activity_logs (action, status, details) VALUES (?, 'success', ?)`,
-          ['publish_article', `Published article "${title}" to ${results.length} website(s)`]
+          `INSERT INTO activity_logs (action, status, details) VALUES (?, ?, ?)`,
+          ['publish_article', failedCount > 0 ? 'warning' : 'success', `Published "${title}" to ${successCount} site(s). Failed on ${failedCount} site(s).`]
         );
 
         res.json({

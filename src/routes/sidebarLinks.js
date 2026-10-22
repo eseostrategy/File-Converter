@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db');
+const { sendWpRequest } = require('../utils/wpClient');
 
 // GET /api/sidebar-links — List active sidebar link configurations
 router.get('/', (req, res) => {
@@ -18,7 +19,7 @@ router.get('/', (req, res) => {
   });
 });
 
-// POST /api/sidebar-links/deploy — Create & Deploy Sidebar Link
+// POST /api/sidebar-links/deploy — Create & Deploy Sidebar Link via real WP API
 router.post('/deploy', async (req, res) => {
   const { campaign_name, url, anchor_text, rel, target, widget_title, domain_ids } = req.body;
 
@@ -37,28 +38,56 @@ router.post('/deploy', async (req, res) => {
       const linkId = this.lastID;
       const placeholders = domain_ids.map(() => '?').join(',');
 
-      db.all(`SELECT * FROM domains WHERE id IN (${placeholders})`, domain_ids, (err, domains) => {
+      db.all(`SELECT * FROM domains WHERE id IN (${placeholders})`, domain_ids, async (err, domains) => {
         if (err || !domains.length) {
           return res.status(400).json({ error: 'No valid target domains found' });
         }
 
         const deploymentResults = [];
 
-        domains.forEach((domain) => {
-          db.run(
-            `INSERT OR REPLACE INTO sidebar_link_deployments (link_id, domain_id, status) VALUES (?, ?, 'deployed')`,
-            [linkId, domain.id]
-          );
+        for (const domain of domains) {
+          const payload = {
+            url: url.trim(),
+            anchor_text: anchor_text.trim(),
+            rel: rel || 'dofollow',
+            target: target || '_blank',
+            widget_title: widget_title || 'Sponsored Links'
+          };
 
-          deploymentResults.push({
-            domain: domain.domain,
-            status: 'deployed'
-          });
-        });
+          const wpRes = await sendWpRequest(domain.domain, '/sidebar-links', payload, domain.site_key);
+
+          if (wpRes.success && wpRes.data && wpRes.data.success) {
+            db.run(
+              `INSERT OR REPLACE INTO sidebar_link_deployments (link_id, domain_id, status, error_message, updated_at) VALUES (?, ?, 'deployed', NULL, CURRENT_TIMESTAMP)`,
+              [linkId, domain.id]
+            );
+
+            deploymentResults.push({
+              domain: domain.domain,
+              status: 'deployed'
+            });
+          } else {
+            const errorMsg = wpRes.error || (wpRes.data && wpRes.data.message) || 'Deployment failed';
+
+            db.run(
+              `INSERT OR REPLACE INTO sidebar_link_deployments (link_id, domain_id, status, error_message, updated_at) VALUES (?, ?, 'failed', ?, CURRENT_TIMESTAMP)`,
+              [linkId, domain.id, errorMsg]
+            );
+
+            deploymentResults.push({
+              domain: domain.domain,
+              status: 'failed',
+              error: errorMsg
+            });
+          }
+        }
+
+        const successCount = deploymentResults.filter(r => r.status === 'deployed').length;
+        const failedCount = deploymentResults.filter(r => r.status === 'failed').length;
 
         db.run(
-          `INSERT INTO activity_logs (action, status, details) VALUES (?, 'success', ?)`,
-          ['deploy_sidebar_link', `Deployed sidebar link "${anchor_text}" (${campaign_name || 'No Campaign'}) to ${deploymentResults.length} site(s)`]
+          `INSERT INTO activity_logs (action, status, details) VALUES (?, ?, ?)`,
+          ['deploy_sidebar_link', failedCount > 0 ? 'warning' : 'success', `Deployed sidebar link "${anchor_text}" to ${successCount} site(s). Failed on ${failedCount} site(s).`]
         );
 
         res.json({

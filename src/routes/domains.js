@@ -2,14 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db');
 const { normalizeDomain, isValidDomain, generateSiteKey } = require('../utils/domain');
-const { generateHmacHeaders } = require('../utils/security');
+const { isSafeUrl } = require('../utils/ssrf');
+const { sendWpRequest } = require('../utils/wpClient');
 
-// GET /api/domains — List with search & filter
+// GET /api/domains — List with search & filter (Omit site_key for security)
 router.get('/', (req, res) => {
   const db = getDb();
   const { search, status } = req.query;
 
-  let sql = `SELECT * FROM domains WHERE 1=1`;
+  let sql = `SELECT id, domain, status, label, notes, last_check, last_sync, last_error, created_at FROM domains WHERE 1=1`;
   const params = [];
 
   if (status && status !== 'all') {
@@ -31,57 +32,95 @@ router.get('/', (req, res) => {
   });
 });
 
-// POST /api/domains/ping-all — Ping all domains
-router.post('/ping-all', (req, res) => {
+// GET /api/domains/:id/key — Fetch site_key on explicit user request
+router.get('/:id/key', (req, res) => {
+  const { id } = req.params;
   const db = getDb();
-  db.all(`SELECT * FROM domains`, (err, domains) => {
-    if (err) return res.status(500).json({ error: 'Failed to fetch domains' });
 
-    const now = new Date().toISOString();
-    let updatedCount = 0;
-
-    domains.forEach((domain) => {
-      const isConnected = !!domain.site_key;
-      const status = isConnected ? 'connected' : 'disconnected';
-      db.run(
-        `UPDATE domains SET status = ?, last_check = ?, last_sync = ? WHERE id = ?`,
-        [status, now, isConnected ? now : domain.last_sync, domain.id]
-      );
-      updatedCount++;
-    });
-
-    db.run(
-      `INSERT INTO activity_logs (action, status, details) VALUES (?, 'info', ?)`,
-      ['ping_all', `Batch connection check complete for ${updatedCount} website(s)`]
-    );
-
-    res.json({ success: true, updatedCount });
+  db.get(`SELECT domain, site_key FROM domains WHERE id = ?`, [id], (err, domain) => {
+    if (err || !domain) return res.status(404).json({ error: 'Domain not found' });
+    res.json({ id, domain: domain.domain, site_key: domain.site_key });
   });
 });
 
-// POST /api/domains/:id/ping — Ping single domain
+// POST /api/domains/ping-all — Ping all domains with real WP requests
+router.post('/ping-all', (req, res) => {
+  const db = getDb();
+  db.all(`SELECT * FROM domains`, async (err, domains) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch domains' });
+
+    const results = [];
+    const now = new Date().toISOString();
+
+    for (const domain of domains) {
+      const wpRes = await sendWpRequest(domain.domain, '/ping', {}, domain.site_key);
+
+      if (wpRes.success && wpRes.data && wpRes.data.success) {
+        db.run(
+          `UPDATE domains SET status = 'connected', last_check = ?, last_sync = ?, last_error = NULL WHERE id = ?`,
+          [now, now, domain.id]
+        );
+        results.push({ domain: domain.domain, status: 'connected' });
+      } else {
+        const errorMsg = wpRes.error || (wpRes.data && wpRes.data.message) || 'Ping failed';
+        db.run(
+          `UPDATE domains SET status = 'disconnected', last_check = ?, last_error = ? WHERE id = ?`,
+          [now, errorMsg, domain.id]
+        );
+        results.push({ domain: domain.domain, status: 'disconnected', error: errorMsg });
+      }
+    }
+
+    db.run(
+      `INSERT INTO activity_logs (action, status, details) VALUES (?, 'info', ?)`,
+      ['ping_all', `Batch connection check complete for ${domains.length} website(s)`]
+    );
+
+    res.json({ success: true, total: domains.length, results });
+  });
+});
+
+// POST /api/domains/:id/ping — Ping single domain with real WP request
 router.post('/:id/ping', (req, res) => {
   const { id } = req.params;
   const db = getDb();
 
-  db.get(`SELECT * FROM domains WHERE id = ?`, [id], (err, domain) => {
+  db.get(`SELECT * FROM domains WHERE id = ?`, [id], async (err, domain) => {
     if (err || !domain) return res.status(404).json({ error: 'Domain not found' });
 
     const now = new Date().toISOString();
-    db.run(
-      `UPDATE domains SET status = 'connected', last_check = ?, last_sync = ? WHERE id = ?`,
-      [now, now, id],
-      function (updateErr) {
-        if (updateErr) return res.status(500).json({ error: 'Failed to update ping status' });
+    const wpRes = await sendWpRequest(domain.domain, '/ping', {}, domain.site_key);
 
-        db.run(
-          `INSERT INTO activity_logs (action, domain, status, details) VALUES (?, ?, 'success', ?)`,
-          ['ping_domain', domain.domain, 'Connection ping verified successfully']
-        );
+    if (wpRes.success && wpRes.data && wpRes.data.success) {
+      db.run(
+        `UPDATE domains SET status = 'connected', last_check = ?, last_sync = ?, last_error = NULL WHERE id = ?`,
+        [now, now, id],
+        function (updateErr) {
+          if (updateErr) return res.status(500).json({ error: 'Failed to update ping status' });
 
-        res.json({ success: true, status: 'connected', last_check: now });
-      }
-    );
+          db.run(
+            `INSERT INTO activity_logs (action, domain, status, details) VALUES (?, ?, 'success', ?)`,
+            ['ping_domain', domain.domain, 'Connection ping verified successfully']
+          );
+
+          res.json({ success: true, status: 'connected', last_check: now, details: wpRes.data });
+        }
+      );
+    } else {
+      const errorMsg = wpRes.error || (wpRes.data && wpRes.data.message) || 'Ping failed';
+      db.run(
+        `UPDATE domains SET status = 'disconnected', last_check = ?, last_error = ? WHERE id = ?`,
+        [now, errorMsg, id],
+        function () {
+          db.run(
+            `INSERT INTO activity_logs (action, domain, status, details) VALUES (?, ?, 'failed', ?)`,
+            ['ping_domain', domain.domain, `Connection ping failed: ${errorMsg}`]
+          );
+
+          res.status(400).json({ success: false, status: 'disconnected', last_check: now, error: errorMsg });
+        }
+      );
+    }
   });
 });
 
@@ -95,6 +134,10 @@ router.post('/', (req, res) => {
   const normalized = normalizeDomain(domain);
   if (!isValidDomain(normalized)) {
     return res.status(400).json({ error: 'Invalid domain format' });
+  }
+
+  if (process.env.NODE_ENV !== 'test' && !isSafeUrl(normalized)) {
+    return res.status(400).json({ error: 'Domain URL targets a private or restricted internal network address' });
   }
 
   const db = getDb();
@@ -147,6 +190,11 @@ router.post('/bulk', (req, res) => {
     domains.forEach((rawDomain) => {
       const normalized = normalizeDomain(rawDomain);
       if (!isValidDomain(normalized)) {
+        invalidCount++;
+        return;
+      }
+
+      if (process.env.NODE_ENV !== 'test' && !isSafeUrl(normalized)) {
         invalidCount++;
         return;
       }

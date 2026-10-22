@@ -4,6 +4,7 @@ const { initDb, getDb } = require('../src/db');
 
 describe('Sidebar Link Management API', () => {
   let domainId;
+  const originalFetch = global.fetch;
 
   beforeAll(async () => {
     await initDb();
@@ -12,6 +13,7 @@ describe('Sidebar Link Management API', () => {
   });
 
   afterAll((done) => {
+    global.fetch = originalFetch;
     const db = getDb();
     db.run("DELETE FROM domains", () => {
       db.run("DELETE FROM sidebar_links", () => {
@@ -21,6 +23,12 @@ describe('Sidebar Link Management API', () => {
   });
 
   it('POST /api/sidebar-links/deploy should create and deploy link to target websites', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(JSON.stringify({ success: true, message: 'Sidebar link widget updated' }))
+    });
+
     const payload = {
       campaign_name: 'Spring SEO Campaign',
       url: 'https://myservice.com/landing',
