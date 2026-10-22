@@ -8,7 +8,8 @@ PBN Commander is a centralized WordPress website and Private Blog Network (PBN) 
 
 - **Modern SaaS Responsive UI:** Responsive single-page application built with HTML5, CSS3, JavaScript (ES6+), FontAwesome, and Inter typography.
 - **Dark Mode & Light Mode:** Toggleable theme with `localStorage` state persistence.
-- **Domain Management:** Add single websites, bulk import via one-domain-per-line list, domain URL normalization (`https://`), SSRF protection against internal IP addresses, duplicate validation, custom tags/labels, and internal notes.
+- **Domain & Client Asset Management:** Single domain registration, editing, and CSV/TSV bulk import supporting client URLs (`client_url`) and target keywords (`keyword`). Includes domain URL normalization (`https://`), SSRF protection against internal IP addresses, duplicate validation, custom tags/labels, and internal notes.
+- **2-Step Bulk Import Workflow:** Preview parsed CSV/TSV data with row-level status validation (Valid, Duplicate, Invalid) prior to committing valid rows to the database.
 - **Custom Client WordPress Plugin:** Custom WordPress plugin connector (`wordpress-plugin/pbn-commander-client/pbn-commander-client.php`) supporting encrypted HMAC SHA-256 signature authorization, 5-minute replay window protection, REST endpoints (`/ping`, `/publish`, `/sidebar-links`), and custom sidebar link widgets.
 - **Real WordPress Connectivity:** Actual HTTP API requests dispatched with HMAC signature headers to WordPress endpoints (`/wp-json/pbn-commander/v1/ping`, `/publish`, `/sidebar-links`).
 - **Article Publisher Engine:** Rich HTML content publishing, post preview, target site selection, post status (`publish` or `draft`), categories, tags, featured image URL, canonical URL, and per-site publishing history logs.
@@ -18,11 +19,22 @@ PBN Commander is a centralized WordPress website and Private Blog Network (PBN) 
 
 ---
 
-## Prerequisites
+## Supported Bulk Import CSV/TSV Format
 
-- **Node.js:** v18.0.0 or higher
-- **npm:** v9.0.0 or higher
-- **WordPress Target Sites:** WordPress v5.0+ with REST API enabled
+The Bulk Import modal supports both CSV (comma-separated) and TSV (tab-separated) files as well as plain single-column domain lists.
+
+### CSV / TSV Column Headers
+```csv
+domain,client_url,keyword,label,notes
+pbndomain1.com,https://clientsite.com/page,Best SEO Services,Batch 1,Main client blog
+pbndomain2.org,client2.org,Backlink Strategy,Batch 1,Secondary blog
+```
+
+- `domain` *(Required)*: The URL or hostname of the child WordPress website.
+- `client_url` *(Optional)*: The target client landing page URL. Validated as HTTP/HTTPS.
+- `keyword` *(Optional)*: Plain text target anchor keyword.
+- `label` *(Optional)*: Categorization tag.
+- `notes` *(Optional)*: Internal reference note.
 
 ---
 
@@ -65,12 +77,6 @@ PBN Commander is a centralized WordPress website and Private Blog Network (PBN) 
 5. In your WordPress sidebar, click on **PBN Commander**.
 6. In the PBN Commander Dashboard, register the website domain in the **Domains & Sites** section, click **Key** to copy the generated **Site API Key**, and paste it into the plugin settings page on WordPress. Click **Save Credentials**.
 7. In the PBN Commander Dashboard, click **Ping** or **Ping All Sites** to confirm authorization status.
-
-### Sidebar Widget Placement Note
-To display deployed sidebar links on your child website frontend:
-1. In WordPress admin, go to **Appearance &rarr; Widgets** (or **Appearance &rarr; Site Editor** for block themes).
-2. Add the **PBN Commander Sidebar Link** widget to your main Sidebar widget area.
-3. When you deploy a sidebar link campaign from the PBN Commander Dashboard, the widget automatically renders the configured link, anchor text, rel attribute, and header on the frontend!
 
 ---
 

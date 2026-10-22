@@ -30,12 +30,27 @@ function initDb() {
           status TEXT NOT NULL DEFAULT 'pending',
           label TEXT,
           notes TEXT,
+          client_url TEXT,
+          keyword TEXT,
           last_check DATETIME,
           last_sync DATETIME,
           last_error TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
+
+      // Safe migration for existing SQLite databases without erasing records
+      db.all(`PRAGMA table_info(domains)`, (err, columns) => {
+        if (!err && columns) {
+          const colNames = columns.map(c => c.name);
+          if (!colNames.includes('client_url')) {
+            db.run(`ALTER TABLE domains ADD COLUMN client_url TEXT`);
+          }
+          if (!colNames.includes('keyword')) {
+            db.run(`ALTER TABLE domains ADD COLUMN keyword TEXT`);
+          }
+        }
+      });
 
       // 3. Articles Table
       db.run(`

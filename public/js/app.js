@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const state = {
   domains: [],
   selectedDomainIds: new Set(),
+  bulkPreviewData: null,
   articles: [],
   publishingHistory: [],
   sidebarLinks: [],
@@ -114,6 +115,8 @@ function initModals() {
   const btnBulkImportModal = document.getElementById('btnBulkImportModal');
   if (btnBulkImportModal) {
     btnBulkImportModal.addEventListener('click', () => {
+      document.getElementById('bulkStepInput').classList.remove('hidden');
+      document.getElementById('bulkStepPreview').classList.add('hidden');
       document.getElementById('modalBulkImport').classList.remove('hidden');
     });
   }
@@ -166,6 +169,169 @@ function initEventHandlers() {
     });
   }
 
+  // Search & Filter Domains
+  const searchInput = document.getElementById('domainSearchInput');
+  const statusFilter = document.getElementById('domainStatusFilter');
+
+  if (searchInput) {
+    let debounceTimer;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => loadDomains(), 300);
+    });
+  }
+
+  if (statusFilter) {
+    statusFilter.addEventListener('change', () => loadDomains());
+  }
+
+  // Single Add Domain Form
+  const addDomainForm = document.getElementById('addDomainForm');
+  if (addDomainForm) {
+    addDomainForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const domainUrl = document.getElementById('addDomainUrl').value.trim();
+      const clientUrl = document.getElementById('addDomainClientUrl').value.trim();
+      const keyword = document.getElementById('addDomainKeyword').value.trim();
+      const labels = document.getElementById('addDomainLabel').value.trim();
+      const notes = document.getElementById('addDomainNotes').value.trim();
+
+      try {
+        const res = await fetch('/api/domains', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            domain: domainUrl,
+            client_url: clientUrl,
+            keyword,
+            label: labels,
+            notes
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast('Website added successfully!', 'success');
+          document.getElementById('modalAddDomain').classList.add('hidden');
+          addDomainForm.reset();
+          loadDomains();
+          loadActivityLogs();
+        } else {
+          showToast(data.error || 'Failed to add domain', 'danger');
+        }
+      } catch (err) {
+        showToast('Network error while adding website', 'danger');
+      }
+    });
+  }
+
+  // Single Edit Domain Form
+  const editDomainForm = document.getElementById('editDomainForm');
+  if (editDomainForm) {
+    editDomainForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editDomainId').value;
+      const clientUrl = document.getElementById('editDomainClientUrl').value.trim();
+      const keyword = document.getElementById('editDomainKeyword').value.trim();
+      const label = document.getElementById('editDomainLabel').value.trim();
+      const notes = document.getElementById('editDomainNotes').value.trim();
+
+      try {
+        const res = await fetch(`/api/domains/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_url: clientUrl, keyword, label, notes })
+        });
+        if (res.ok) {
+          showToast('Domain details updated!', 'success');
+          document.getElementById('modalEditDomain').classList.add('hidden');
+          loadDomains();
+        } else {
+          showToast('Failed to update domain details', 'danger');
+        }
+      } catch (err) {
+        showToast('Network error updating domain', 'danger');
+      }
+    });
+  }
+
+  // Bulk Import Preview & Confirm
+  const btnPreviewBulkImport = document.getElementById('btnPreviewBulkImport');
+  if (btnPreviewBulkImport) {
+    btnPreviewBulkImport.addEventListener('click', async () => {
+      const rawText = document.getElementById('bulkDomainList').value.trim();
+      if (!rawText) {
+        showToast('Please enter CSV or TSV data to preview', 'warning');
+        return;
+      }
+
+      showToast('Validating input rows...', 'info');
+
+      try {
+        const res = await fetch('/api/domains/bulk-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rawText })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          state.bulkPreviewData = data;
+          renderBulkPreview();
+          document.getElementById('bulkStepInput').classList.add('hidden');
+          document.getElementById('bulkStepPreview').classList.remove('hidden');
+        } else {
+          showToast(data.error || 'Failed to preview CSV/TSV data', 'danger');
+        }
+      } catch (err) {
+        showToast('Network error during bulk preview', 'danger');
+      }
+    });
+  }
+
+  const btnBackToBulkInput = document.getElementById('btnBackToBulkInput');
+  if (btnBackToBulkInput) {
+    btnBackToBulkInput.addEventListener('click', () => {
+      document.getElementById('bulkStepInput').classList.remove('hidden');
+      document.getElementById('bulkStepPreview').classList.add('hidden');
+    });
+  }
+
+  const btnConfirmBulkImport = document.getElementById('btnConfirmBulkImport');
+  if (btnConfirmBulkImport) {
+    btnConfirmBulkImport.addEventListener('click', async () => {
+      if (!state.bulkPreviewData || !state.bulkPreviewData.previewItems) return;
+
+      const validRows = state.bulkPreviewData.previewItems.filter(item => item.status === 'valid');
+      if (!validRows.length) {
+        showToast('No valid rows available to import', 'warning');
+        return;
+      }
+
+      const defaultLabel = document.getElementById('bulkDomainDefaultLabel').value.trim();
+
+      try {
+        const res = await fetch('/api/domains/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rows: validRows, defaultLabel })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`Successfully imported ${data.addedCount} valid domains!`, 'success');
+          document.getElementById('modalBulkImport').classList.add('hidden');
+          document.getElementById('bulkImportForm').reset();
+          state.bulkPreviewData = null;
+          loadDomains();
+          loadActivityLogs();
+        } else {
+          showToast(data.error || 'Failed to bulk import domains', 'danger');
+        }
+      } catch (err) {
+        showToast('Network error during bulk import', 'danger');
+      }
+    });
+  }
+
+  // Article Publishing Form
   const articleForm = document.getElementById('articleForm');
   if (articleForm) {
     articleForm.addEventListener('submit', async (e) => {
@@ -227,6 +393,7 @@ function initEventHandlers() {
     });
   }
 
+  // Sidebar Link Form
   const sidebarLinkForm = document.getElementById('sidebarLinkForm');
   if (sidebarLinkForm) {
     sidebarLinkForm.addEventListener('submit', async (e) => {
@@ -291,71 +458,6 @@ function initEventHandlers() {
     btnPingAllSites.addEventListener('click', () => {
       showToast('Initiated batch connection check across all websites...', 'info');
       triggerBatchConnectionCheck();
-    });
-  }
-
-  const addDomainForm = document.getElementById('addDomainForm');
-  if (addDomainForm) {
-    addDomainForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const domainUrl = document.getElementById('addDomainUrl').value.trim();
-      const labels = document.getElementById('addDomainLabel').value.trim();
-      const notes = document.getElementById('addDomainNotes').value.trim();
-
-      try {
-        const res = await fetch('/api/domains', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ domain: domainUrl, label: labels, notes })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          showToast('Website added successfully!', 'success');
-          document.getElementById('modalAddDomain').classList.add('hidden');
-          addDomainForm.reset();
-          loadDomains();
-          loadActivityLogs();
-        } else {
-          showToast(data.error || 'Failed to add domain', 'danger');
-        }
-      } catch (err) {
-        showToast('Network error while adding website', 'danger');
-      }
-    });
-  }
-
-  const bulkImportForm = document.getElementById('bulkImportForm');
-  if (bulkImportForm) {
-    bulkImportForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const rawText = document.getElementById('bulkDomainList').value;
-      const defaultLabel = document.getElementById('bulkDomainDefaultLabel').value.trim();
-      const domains = rawText.split('\n').map(d => d.trim()).filter(Boolean);
-
-      if (!domains.length) {
-        showToast('Please enter at least one domain URL', 'warning');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/domains/bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ domains, label: defaultLabel })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          showToast(`Successfully imported ${data.addedCount} websites!`, 'success');
-          document.getElementById('modalBulkImport').classList.add('hidden');
-          bulkImportForm.reset();
-          loadDomains();
-          loadActivityLogs();
-        } else {
-          showToast(data.error || 'Failed to bulk import domains', 'danger');
-        }
-      } catch (err) {
-        showToast('Network error during bulk import', 'danger');
-      }
     });
   }
 }
@@ -437,6 +539,92 @@ async function loadTasks() {
     console.error('Failed to load tasks', err);
   }
 }
+
+function renderBulkPreview() {
+  const statsContainer = document.getElementById('bulkPreviewStatsBar');
+  const tbody = document.getElementById('bulkPreviewTableBody');
+  const data = state.bulkPreviewData;
+
+  if (!data) return;
+
+  statsContainer.innerHTML = `
+    <span class="badge badge-info">Total Rows: ${data.totalRows}</span>
+    <span class="badge badge-success">Valid: ${data.validCount}</span>
+    <span class="badge badge-warning">Duplicates: ${data.duplicateCount}</span>
+    <span class="badge badge-danger">Invalid: ${data.invalidCount}</span>
+  `;
+
+  tbody.innerHTML = data.previewItems.map(item => `
+    <tr>
+      <td>#${item.rowNumber}</td>
+      <td>
+        <strong>${escapeHtml(item.normalized_domain || item.raw_domain)}</strong>
+        ${item.error ? `<div style="color:var(--danger); font-size:0.75rem;">${escapeHtml(item.error)}</div>` : ''}
+      </td>
+      <td>${item.client_url ? `<a href="${escapeHtml(item.client_url)}" target="_blank" style="color:var(--primary); font-size:0.8rem;">${escapeHtml(item.client_url)}</a>` : '-'}</td>
+      <td>${escapeHtml(item.keyword || '-')}</td>
+      <td>
+        <span class="badge ${item.status === 'valid' ? 'badge-success' : item.status === 'duplicate' ? 'badge-warning' : 'badge-danger'}">
+          ${item.status}
+        </span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderDomainsTable() {
+  const tbody = document.getElementById('domainsTableBody');
+  if (!tbody) return;
+
+  if (!state.domains.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center p-4">No domains registered yet. Click "Add Domain" or "Bulk Import" to get started.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = state.domains.map(d => `
+    <tr>
+      <td>
+        <input type="checkbox" class="domain-checkbox" value="${d.id}" ${state.selectedDomainIds.has(d.id) ? 'checked' : ''} onchange="toggleSelectDomain(${d.id}, this.checked)">
+      </td>
+      <td>
+        <strong>${escapeHtml(d.domain)}</strong>
+        ${d.notes ? `<div class="text-muted" style="font-size:0.75rem;">${escapeHtml(d.notes)}</div>` : ''}
+        ${d.last_error ? `<div style="color:var(--danger); font-size:0.75rem;"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(d.last_error)}</div>` : ''}
+      </td>
+      <td>
+        ${d.client_url ? `<a href="${escapeHtml(d.client_url)}" target="_blank" style="color:var(--primary); font-weight:500;">${escapeHtml(d.client_url)}</a>` : '-'}
+      </td>
+      <td>${escapeHtml(d.keyword || '-')}</td>
+      <td>
+        <span class="badge ${d.status === 'connected' ? 'badge-success' : d.status === 'disconnected' ? 'badge-danger' : 'badge-warning'}">
+          ${d.status || 'pending'}
+        </span>
+      </td>
+      <td>${escapeHtml(d.label || '-')}</td>
+      <td>${d.last_check ? new Date(d.last_check).toLocaleString() : 'Never'}</td>
+      <td>
+        <button class="btn btn-sm btn-secondary" onclick="editDomainModal(${d.id})"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-sm btn-secondary" onclick="viewSiteKey(${d.id})"><i class="fa-solid fa-key"></i> Key</button>
+        <button class="btn btn-sm btn-outline" onclick="pingSingleSite(${d.id})"><i class="fa-solid fa-plug"></i></button>
+        <button class="btn btn-sm btn-danger" onclick="deleteSingleDomain(${d.id})"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.editDomainModal = (id) => {
+  const domain = state.domains.find(d => d.id === id);
+  if (!domain) return;
+
+  document.getElementById('editDomainId').value = domain.id;
+  document.getElementById('editDomainUrlDisplay').value = domain.domain;
+  document.getElementById('editDomainClientUrl').value = domain.client_url || '';
+  document.getElementById('editDomainKeyword').value = domain.keyword || '';
+  document.getElementById('editDomainLabel').value = domain.label || '';
+  document.getElementById('editDomainNotes').value = domain.notes || '';
+
+  document.getElementById('modalEditDomain').classList.remove('hidden');
+};
 
 function renderActivityLogsTable() {
   const tbody = document.getElementById('activityTableBody');
@@ -572,42 +760,6 @@ function renderDashboardStats() {
   const percentage = total > 0 ? Math.round((connected / total) * 100) : 100;
   document.getElementById('healthPercentage').textContent = `${percentage}%`;
   document.getElementById('healthFill').style.width = `${percentage}%`;
-}
-
-function renderDomainsTable() {
-  const tbody = document.getElementById('domainsTableBody');
-  if (!tbody) return;
-
-  if (!state.domains.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4">No domains registered yet. Click "Add Domain" or "Bulk Import" to get started.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = state.domains.map(d => `
-    <tr>
-      <td>
-        <input type="checkbox" class="domain-checkbox" value="${d.id}" ${state.selectedDomainIds.has(d.id) ? 'checked' : ''} onchange="toggleSelectDomain(${d.id}, this.checked)">
-      </td>
-      <td>
-        <strong>${escapeHtml(d.domain)}</strong>
-        ${d.notes ? `<div class="text-muted" style="font-size:0.75rem;">${escapeHtml(d.notes)}</div>` : ''}
-        ${d.last_error ? `<div style="color:var(--danger); font-size:0.75rem;"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(d.last_error)}</div>` : ''}
-      </td>
-      <td>
-        <span class="badge ${d.status === 'connected' ? 'badge-success' : d.status === 'disconnected' ? 'badge-danger' : 'badge-warning'}">
-          ${d.status || 'pending'}
-        </span>
-      </td>
-      <td>${escapeHtml(d.label || '-')}</td>
-      <td>${d.last_check ? new Date(d.last_check).toLocaleString() : 'Never'}</td>
-      <td>${d.last_sync ? new Date(d.last_sync).toLocaleString() : 'Never'}</td>
-      <td>
-        <button class="btn btn-sm btn-secondary" onclick="viewSiteKey(${d.id})"><i class="fa-solid fa-key"></i> Key</button>
-        <button class="btn btn-sm btn-outline" onclick="pingSingleSite(${d.id})"><i class="fa-solid fa-plug"></i> Ping</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteSingleDomain(${d.id})"><i class="fa-solid fa-trash"></i></button>
-      </td>
-    </tr>
-  `).join('');
 }
 
 function renderTargetSitesList() {

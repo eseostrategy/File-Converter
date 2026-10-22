@@ -184,7 +184,7 @@
             <div class="search-filter-group">
               <div class="search-input-wrapper">
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="domainSearchInput" placeholder="Search domain, label, or note...">
+                <input type="text" id="domainSearchInput" placeholder="Search domain, client URL, keyword, or note...">
               </div>
               <select id="domainStatusFilter" class="form-select">
                 <option value="all">All Connection Statuses</option>
@@ -196,7 +196,7 @@
 
             <div class="button-group">
               <button class="btn btn-secondary" id="btnBulkImportModal">
-                <i class="fa-solid fa-file-import"></i> Bulk Import
+                <i class="fa-solid fa-file-import"></i> Bulk Import (CSV/TSV)
               </button>
               <button class="btn btn-primary" id="btnAddDomainModal">
                 <i class="fa-solid fa-plus"></i> Add Domain
@@ -222,12 +222,13 @@
                 <thead>
                   <tr>
                     <th width="40"><input type="checkbox" id="selectAllDomains"></th>
-                    <th>Domain / URL</th>
+                    <th>PBN Domain</th>
+                    <th>Client URL</th>
+                    <th>Target Keyword</th>
                     <th>Status</th>
                     <th>Labels</th>
                     <th>Last Connection Check</th>
-                    <th>Last Successful Sync</th>
-                    <th width="140">Actions</th>
+                    <th width="160">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="domainsTableBody">
@@ -570,6 +571,16 @@
             <label for="addDomainUrl">Website Domain / URL <span class="required">*</span></label>
             <input type="text" id="addDomainUrl" class="form-input" placeholder="https://example.com" required>
           </div>
+          <div class="grid-2-col">
+            <div class="form-group">
+              <label for="addDomainClientUrl">Client Target URL</label>
+              <input type="text" id="addDomainClientUrl" class="form-input" placeholder="https://client.com">
+            </div>
+            <div class="form-group">
+              <label for="addDomainKeyword">Target Keyword</label>
+              <input type="text" id="addDomainKeyword" class="form-input" placeholder="e.g. SEO Services">
+            </div>
+          </div>
           <div class="form-group">
             <label for="addDomainLabel">Labels / Tags (Comma separated)</label>
             <input type="text" id="addDomainLabel" class="form-input" placeholder="e.g. Tech, Niche-1, High-DA">
@@ -587,28 +598,109 @@
     </div>
   </div>
 
-  <!-- Bulk Import Modal -->
-  <div class="modal-backdrop hidden" id="modalBulkImport">
+  <!-- Edit Domain Modal -->
+  <div class="modal-backdrop hidden" id="modalEditDomain">
     <div class="modal">
       <div class="modal-header">
-        <h3>Bulk Import Websites</h3>
+        <h3>Edit Domain Details</h3>
+        <button class="modal-close" data-close="modalEditDomain">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editDomainForm">
+          <input type="hidden" id="editDomainId">
+          <div class="form-group">
+            <label for="editDomainUrlDisplay">PBN Domain</label>
+            <input type="text" id="editDomainUrlDisplay" class="form-input" readonly>
+          </div>
+          <div class="grid-2-col">
+            <div class="form-group">
+              <label for="editDomainClientUrl">Client Target URL</label>
+              <input type="text" id="editDomainClientUrl" class="form-input" placeholder="https://client.com">
+            </div>
+            <div class="form-group">
+              <label for="editDomainKeyword">Target Keyword</label>
+              <input type="text" id="editDomainKeyword" class="form-input" placeholder="e.g. SEO Services">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="editDomainLabel">Labels / Tags</label>
+            <input type="text" id="editDomainLabel" class="form-input" placeholder="e.g. Batch 1">
+          </div>
+          <div class="form-group">
+            <label for="editDomainNotes">Notes</label>
+            <textarea id="editDomainNotes" class="form-textarea" rows="3" placeholder="Optional notes..."></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close="modalEditDomain">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Import Modal with CSV/TSV Preview -->
+  <div class="modal-backdrop hidden" id="modalBulkImport">
+    <div class="modal" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3>Bulk Import Websites (CSV or TSV)</h3>
         <button class="modal-close" data-close="modalBulkImport">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="bulkImportForm">
-          <div class="form-group">
-            <label for="bulkDomainList">Enter Domains (One domain per line) <span class="required">*</span></label>
-            <textarea id="bulkDomainList" class="form-textarea" rows="8" placeholder="https://site1.com&#10;https://site2.org&#10;site3.net" required></textarea>
+        <div id="bulkStepInput">
+          <div class="format-guidelines mb-3" style="background:var(--surface-hover); padding:12px; border-radius:var(--radius); font-size:0.85rem;">
+            <strong>Supported Formats:</strong>
+            <ul style="margin-left:20px; margin-top:4px;">
+              <li>CSV with Header: <code>domain,client_url,keyword,label,notes</code></li>
+              <li>TSV with Header (Tab-separated)</li>
+              <li>Plain domain list (One domain per line)</li>
+            </ul>
+            <div style="color:var(--text-muted); margin-top:4px; font-size:0.75rem;">Example: <code>pbndomain.com,https://client.com,SEO Keyword,Tech,My notes</code></div>
           </div>
-          <div class="form-group">
-            <label for="bulkDomainDefaultLabel">Default Label (Optional)</label>
-            <input type="text" id="bulkDomainDefaultLabel" class="form-input" placeholder="e.g. Bulk Import Batch 1">
+
+          <form id="bulkImportForm">
+            <div class="form-group">
+              <label for="bulkDomainList">Enter or Paste CSV / TSV Data <span class="required">*</span></label>
+              <textarea id="bulkDomainList" class="form-textarea" rows="8" placeholder="domain,client_url,keyword,label,notes&#10;site1.com,https://client1.com,SEO Keyword 1,Batch A,Note 1&#10;site2.org,https://client2.com,SEO Keyword 2,Batch A,Note 2" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="bulkDomainDefaultLabel">Default Label for Plain Lines (Optional)</label>
+              <input type="text" id="bulkDomainDefaultLabel" class="form-input" placeholder="e.g. Bulk Import Batch 1">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-close="modalBulkImport">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btnPreviewBulkImport"><i class="fa-solid fa-magnifying-glass"></i> Preview & Validate</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="bulkStepPreview" class="hidden">
+          <div class="preview-stats-bar mb-3" id="bulkPreviewStatsBar" style="display:flex; gap:12px; font-size:0.85rem;">
+            <!-- Rendered via JS -->
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-close="modalBulkImport">Cancel</button>
-            <button type="submit" class="btn btn-primary">Import Websites</button>
+
+          <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+            <table class="data-table" id="bulkPreviewTable">
+              <thead>
+                <tr>
+                  <th>Row</th>
+                  <th>Domain</th>
+                  <th>Client URL</th>
+                  <th>Keyword</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="bulkPreviewTableBody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
           </div>
-        </form>
+
+          <div class="modal-footer mt-4">
+            <button type="button" class="btn btn-secondary" id="btnBackToBulkInput"><i class="fa-solid fa-arrow-left"></i> Edit Input</button>
+            <button type="button" class="btn btn-success" id="btnConfirmBulkImport"><i class="fa-solid fa-file-import"></i> Confirm Import Valid Rows</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

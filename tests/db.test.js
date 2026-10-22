@@ -1,6 +1,6 @@
 const { initDb, getDb } = require('../src/db');
 
-describe('Database Schema Initialization', () => {
+describe('Database Schema Initialization & Column Migration', () => {
   let db;
 
   beforeAll(async () => {
@@ -25,6 +25,16 @@ describe('Database Schema Initialization', () => {
       expectedTables.forEach(table => {
         expect(tableNames).toContain(table);
       });
+      done();
+    });
+  });
+
+  it('should verify domains table contains client_url and keyword columns', (done) => {
+    db.all("PRAGMA table_info(domains);", (err, columns) => {
+      expect(err).toBeNull();
+      const names = columns.map(c => c.name);
+      expect(names).toContain('client_url');
+      expect(names).toContain('keyword');
       done();
     });
   });

@@ -4,13 +4,14 @@ const { getDb } = require('../db');
 const { normalizeDomain, isValidDomain, generateSiteKey } = require('../utils/domain');
 const { isSafeUrl } = require('../utils/ssrf');
 const { sendWpRequest } = require('../utils/wpClient');
+const { parseDelimitedText, validateClientUrl, normalizeClientUrl } = require('../utils/csvParser');
 
-// GET /api/domains — List with search & filter (Omit site_key for security)
+// GET /api/domains — List with search & filter (Includes client_url and keyword, omits site_key)
 router.get('/', (req, res) => {
   const db = getDb();
   const { search, status } = req.query;
 
-  let sql = `SELECT id, domain, status, label, notes, last_check, last_sync, last_error, created_at FROM domains WHERE 1=1`;
+  let sql = `SELECT id, domain, status, label, notes, client_url, keyword, last_check, last_sync, last_error, created_at FROM domains WHERE 1=1`;
   const params = [];
 
   if (status && status !== 'all') {
@@ -19,9 +20,9 @@ router.get('/', (req, res) => {
   }
 
   if (search) {
-    sql += ` AND (domain LIKE ? OR label LIKE ? OR notes LIKE ?)`;
+    sql += ` AND (domain LIKE ? OR label LIKE ? OR notes LIKE ? OR client_url LIKE ? OR keyword LIKE ?)`;
     const term = `%${search.trim()}%`;
-    params.push(term, term, term);
+    params.push(term, term, term, term, term);
   }
 
   sql += ` ORDER BY created_at DESC`;
@@ -40,6 +41,154 @@ router.get('/:id/key', (req, res) => {
   db.get(`SELECT domain, site_key FROM domains WHERE id = ?`, [id], (err, domain) => {
     if (err || !domain) return res.status(404).json({ error: 'Domain not found' });
     res.json({ id, domain: domain.domain, site_key: domain.site_key });
+  });
+});
+
+// POST /api/domains/bulk-preview — Parse CSV/TSV and preview validation/duplicates
+router.post('/bulk-preview', (req, res) => {
+  const { rawText } = req.body;
+  if (!rawText) {
+    return res.status(400).json({ error: 'Raw CSV/TSV data string required' });
+  }
+
+  const parsedRows = parseDelimitedText(rawText);
+  if (!parsedRows.length) {
+    return res.status(400).json({ error: 'No valid rows or domain records found in input' });
+  }
+
+  const db = getDb();
+  db.all(`SELECT domain FROM domains`, [], (err, existingRows) => {
+    if (err) return res.status(500).json({ error: 'Failed to query database' });
+
+    const existingDomains = new Set(existingRows.map(r => r.domain.toLowerCase()));
+    const previewItems = [];
+    let validCount = 0;
+    let duplicateCount = 0;
+    let invalidCount = 0;
+
+    parsedRows.forEach((row, index) => {
+      const normalizedDom = normalizeDomain(row.domain);
+      const isDomValid = isValidDomain(normalizedDom);
+      const isClientUrlValid = validateClientUrl(row.client_url);
+      const isSsrfSafe = process.env.NODE_ENV === 'test' || isSafeUrl(normalizedDom);
+
+      let status = 'valid';
+      let error = null;
+
+      if (!isDomValid) {
+        status = 'invalid';
+        error = 'Invalid domain format';
+        invalidCount++;
+      } else if (!isSsrfSafe) {
+        status = 'invalid';
+        error = 'Restricted private/internal address';
+        invalidCount++;
+      } else if (!isClientUrlValid) {
+        status = 'invalid';
+        error = 'Invalid client URL format';
+        invalidCount++;
+      } else if (existingDomains.has(normalizedDom.toLowerCase())) {
+        status = 'duplicate';
+        error = 'Domain already exists in database';
+        duplicateCount++;
+      } else {
+        validCount++;
+        // Add to existing set to catch duplicates within the same batch file
+        existingDomains.add(normalizedDom.toLowerCase());
+      }
+
+      previewItems.push({
+        rowNumber: index + 1,
+        raw_domain: row.domain,
+        normalized_domain: normalizedDom,
+        client_url: row.client_url ? normalizeClientUrl(row.client_url) : '',
+        keyword: row.keyword || '',
+        label: row.label || '',
+        notes: row.notes || '',
+        status,
+        error
+      });
+    });
+
+    res.json({
+      success: true,
+      totalRows: parsedRows.length,
+      validCount,
+      duplicateCount,
+      invalidCount,
+      previewItems
+    });
+  });
+});
+
+// POST /api/domains/bulk — Import valid domains (Accepts raw text or array of pre-parsed rows)
+router.post('/bulk', (req, res) => {
+  const { rawText, rows, defaultLabel } = req.body;
+  let targetRows = [];
+
+  if (Array.isArray(rows) && rows.length > 0) {
+    targetRows = rows;
+  } else if (typeof rawText === 'string') {
+    targetRows = parseDelimitedText(rawText);
+  } else if (Array.isArray(req.body.domains) && req.body.domains.length > 0) {
+    targetRows = req.body.domains.map(d => ({ domain: d, label: req.body.label }));
+  }
+
+  if (!targetRows.length) {
+    return res.status(400).json({ error: 'No rows or domain data provided for import' });
+  }
+
+  const db = getDb();
+  let addedCount = 0;
+  let duplicateCount = 0;
+  let invalidCount = 0;
+
+  db.serialize(() => {
+    const stmt = db.prepare(
+      `INSERT OR IGNORE INTO domains (domain, site_key, label, notes, client_url, keyword, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')`
+    );
+
+    targetRows.forEach((row) => {
+      const normalizedDom = normalizeDomain(row.normalized_domain || row.domain);
+      const normClientUrl = row.client_url ? normalizeClientUrl(row.client_url) : null;
+
+      if (!isValidDomain(normalizedDom) || (row.client_url && !validateClientUrl(row.client_url))) {
+        invalidCount++;
+        return;
+      }
+
+      if (process.env.NODE_ENV !== 'test' && !isSafeUrl(normalizedDom)) {
+        invalidCount++;
+        return;
+      }
+
+      const siteKey = generateSiteKey();
+      const finalLabel = row.label || defaultLabel || null;
+      const finalNotes = row.notes || null;
+      const finalKeyword = row.keyword || null;
+
+      stmt.run([normalizedDom, siteKey, finalLabel, finalNotes, normClientUrl, finalKeyword], function (err) {
+        if (!err && this.changes > 0) {
+          addedCount++;
+        } else if (this.changes === 0) {
+          duplicateCount++;
+        }
+      });
+    });
+
+    stmt.finalize(() => {
+      db.run(
+        `INSERT INTO activity_logs (action, status, details) VALUES (?, 'info', ?)`,
+        ['bulk_import', `Bulk imported ${addedCount} domains. Duplicates: ${duplicateCount}, Invalid: ${invalidCount}`]
+      );
+
+      res.json({
+        success: true,
+        addedCount,
+        duplicateCount,
+        invalidCount
+      });
+    });
   });
 });
 
@@ -124,9 +273,9 @@ router.post('/:id/ping', (req, res) => {
   });
 });
 
-// POST /api/domains — Add single domain
+// POST /api/domains — Add single domain with client_url & keyword
 router.post('/', (req, res) => {
-  const { domain, label, notes } = req.body;
+  const { domain, label, notes, client_url, keyword } = req.body;
   if (!domain) {
     return res.status(400).json({ error: 'Domain URL is required' });
   }
@@ -136,16 +285,21 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Invalid domain format' });
   }
 
+  if (client_url && !validateClientUrl(client_url)) {
+    return res.status(400).json({ error: 'Invalid client URL format' });
+  }
+
   if (process.env.NODE_ENV !== 'test' && !isSafeUrl(normalized)) {
     return res.status(400).json({ error: 'Domain URL targets a private or restricted internal network address' });
   }
 
+  const normClientUrl = client_url ? normalizeClientUrl(client_url) : null;
   const db = getDb();
   const siteKey = generateSiteKey();
 
   db.run(
-    `INSERT INTO domains (domain, site_key, label, notes, status) VALUES (?, ?, ?, ?, 'pending')`,
-    [normalized, siteKey, label || null, notes || null],
+    `INSERT INTO domains (domain, site_key, label, notes, client_url, keyword, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+    [normalized, siteKey, label || null, notes || null, normClientUrl, keyword || null],
     function (err) {
       if (err) {
         if (err.message.includes('UNIQUE')) {
@@ -164,76 +318,29 @@ router.post('/', (req, res) => {
         id: this.lastID,
         domain: normalized,
         site_key: siteKey,
+        client_url: normClientUrl,
+        keyword: keyword || null,
         status: 'pending'
       });
     }
   );
 });
 
-// POST /api/domains/bulk — Bulk import
-router.post('/bulk', (req, res) => {
-  const { domains, label } = req.body;
-  if (!Array.isArray(domains) || !domains.length) {
-    return res.status(400).json({ error: 'Array of domain strings required' });
-  }
-
-  const db = getDb();
-  let addedCount = 0;
-  let duplicateCount = 0;
-  let invalidCount = 0;
-
-  db.serialize(() => {
-    const stmt = db.prepare(
-      `INSERT OR IGNORE INTO domains (domain, site_key, label, status) VALUES (?, ?, ?, 'pending')`
-    );
-
-    domains.forEach((rawDomain) => {
-      const normalized = normalizeDomain(rawDomain);
-      if (!isValidDomain(normalized)) {
-        invalidCount++;
-        return;
-      }
-
-      if (process.env.NODE_ENV !== 'test' && !isSafeUrl(normalized)) {
-        invalidCount++;
-        return;
-      }
-
-      const siteKey = generateSiteKey();
-      stmt.run([normalized, siteKey, label || null], function (err) {
-        if (!err && this.changes > 0) {
-          addedCount++;
-        } else if (this.changes === 0) {
-          duplicateCount++;
-        }
-      });
-    });
-
-    stmt.finalize(() => {
-      db.run(
-        `INSERT INTO activity_logs (action, status, details) VALUES (?, 'info', ?)`,
-        ['bulk_import', `Bulk imported ${addedCount} domains. Duplicates: ${duplicateCount}, Invalid: ${invalidCount}`]
-      );
-
-      res.json({
-        success: true,
-        addedCount,
-        duplicateCount,
-        invalidCount
-      });
-    });
-  });
-});
-
-// PUT /api/domains/:id — Update label/notes
+// PUT /api/domains/:id — Update single domain details including client_url & keyword
 router.put('/:id', (req, res) => {
   const { id } = req.params;
-  const { label, notes } = req.body;
+  const { label, notes, client_url, keyword } = req.body;
+
+  if (client_url && !validateClientUrl(client_url)) {
+    return res.status(400).json({ error: 'Invalid client URL format' });
+  }
+
+  const normClientUrl = client_url ? normalizeClientUrl(client_url) : null;
   const db = getDb();
 
   db.run(
-    `UPDATE domains SET label = ?, notes = ? WHERE id = ?`,
-    [label, notes, id],
+    `UPDATE domains SET label = ?, notes = ?, client_url = ?, keyword = ? WHERE id = ?`,
+    [label || null, notes || null, normClientUrl, keyword || null, id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Failed to update domain' });
       if (this.changes === 0) return res.status(404).json({ error: 'Domain not found' });
